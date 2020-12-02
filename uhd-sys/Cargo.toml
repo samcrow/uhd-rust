@@ -1,0 +1,20 @@
+[package]
+name = "uhd-sys"
+version = "0.1.0"
+authors = ["Sam Crow <scrow@eng.ucsd.edu>"]
+edition = "2018"
+license = "MIT OR Apache-2.0"
+description = "Low-level bindings to the UHD (USRP Hardware Driver) library, which provides support for Ettus Research / National Instruments Universal Software Radio Peripheral devices"
+keywords = ["sdr"]
+categories = ["external-ffi-bindings", "hardware-support"]
+links = "uhd"
+build = "build.rs"
+
+[dependencies]
+
+[build-dependencies]
+metadeps = "1.1.2"
+bindgen = "0.55.1"
+
+[package.metadata.pkg-config]
+uhd = "*"

@@ -1,0 +1,12 @@
+[package]
+name = "uhd"
+version = "0.1.0"
+authors = ["Sam Crow <scrow@eng.ucsd.edu>"]
+edition = "2018"
+description = "Bindings to the UHD (USRP Hardware Driver) library, which provides support for Ettus Research / National Instruments Universal Software Radio Peripheral devices"
+
+[dependencies]
+
+[dependencies.uhd-sys]
+version = "0.1.0"
+path = "../uhd-sys"

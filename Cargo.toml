@@ -1,0 +1,3 @@
+[workspace]
+
+members = ['uhd-sys', 'uhd']
