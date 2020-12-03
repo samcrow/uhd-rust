@@ -19,9 +19,7 @@ fn main() {
 }
 
 fn generate_bindings(include_path: &Path) {
-    let mut usrp_header = include_path.join("uhd");
-    usrp_header.push("usrp");
-    usrp_header.push("usrp.h");
+    let usrp_header = include_path.join("uhd.h");
 
     let out_dir = PathBuf::from(env::var_os("OUT_DIR").unwrap());
     let out_path = out_dir.join("bindgen.rs");
