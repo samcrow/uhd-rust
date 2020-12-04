@@ -10,6 +10,7 @@ use crate::utils::copy_string;
 pub(crate) struct StringVector(uhd_sys::uhd_string_vector_handle);
 
 impl StringVector {
+    /// Creates a new empty string vector
     pub fn new() -> Result<Self, Error> {
         let mut handle: uhd_sys::uhd_string_vector_handle = ptr::null_mut();
         let status = unsafe { uhd_sys::uhd_string_vector_make(&mut handle) };
@@ -19,6 +20,7 @@ impl StringVector {
         }
     }
 
+    /// Returns the number of strings in this vector
     pub fn len(&self) -> usize {
         let mut len = 0;
         let status = unsafe { uhd_sys::uhd_string_vector_size(self.0, &mut len) };
@@ -29,9 +31,8 @@ impl StringVector {
     /// Appends a string to the end of this vector
     ///
     /// This function returns an error if the provided value contains a null byte.
-    ///
-    /// max_len: The maximum
-    pub fn append(&mut self, value: &str) -> Result<(), NulError> {
+    #[allow(dead_code)]
+    pub fn push(&mut self, value: String) -> Result<(), NulError> {
         let value_c = CString::new(value)?;
         let status = unsafe { uhd_sys::uhd_string_vector_push_back(&mut self.0, value_c.as_ptr()) };
         check_status(status).unwrap();

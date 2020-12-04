@@ -1,6 +1,6 @@
 use crate::utils::copy_string;
-use crate::{check_status, Error, ErrorKind};
-use std::ffi::{CString, NulError};
+use crate::{check_status, Error};
+use std::ffi::CString;
 use std::os::raw::c_int;
 use std::ptr;
 
@@ -14,7 +14,7 @@ impl DaughterBoardEeprom {
         })
     }
 
-    pub fn set_id(&mut self, id: String) -> Result<(), Error> {
+    pub fn set_id(&mut self, id: &str) -> Result<(), Error> {
         let id_c = CString::new(id)?;
         check_status(unsafe { uhd_sys::uhd_dboard_eeprom_set_id(self.0, id_c.as_ptr()) })
     }
@@ -25,7 +25,7 @@ impl DaughterBoardEeprom {
         })
     }
 
-    pub fn set_serial(&mut self, serial: String) -> Result<(), Error> {
+    pub fn set_serial(&mut self, serial: &str) -> Result<(), Error> {
         let serial_c = CString::new(serial)?;
         check_status(unsafe { uhd_sys::uhd_dboard_eeprom_set_serial(self.0, serial_c.as_ptr()) })
     }
@@ -40,8 +40,8 @@ impl DaughterBoardEeprom {
         check_status(unsafe { uhd_sys::uhd_dboard_eeprom_set_revision(self.0, revision) })
     }
 
-    pub(crate) fn handle_mut(&mut self) -> &mut uhd_sys::uhd_dboard_eeprom_handle {
-        &mut self.0
+    pub(crate) fn handle(&mut self) -> uhd_sys::uhd_dboard_eeprom_handle {
+        self.0
     }
 }
 

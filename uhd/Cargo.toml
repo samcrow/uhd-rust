@@ -7,7 +7,8 @@ description = "Bindings to the UHD (USRP Hardware Driver) library, which provide
 repository = "https://github.com/samcrow/uhd-rust"
 
 [dependencies]
+num-complex = "0.3.1"
 
 [dependencies.uhd-sys]
-version = "0.1.0"
+version = "0.1.1"
 path = "../uhd-sys"
