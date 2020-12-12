@@ -1,4 +1,3 @@
-
 use std::os::raw::c_char;
 
 use crate::error::{check_status, Error, ErrorKind};

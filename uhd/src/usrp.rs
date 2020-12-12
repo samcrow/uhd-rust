@@ -390,15 +390,11 @@ impl Usrp {
         };
 
         // Create a streamer
-        let mut streamer = ReceiveStreamer {
-            usrp: Default::default(),
-            handle: ptr::null_mut(),
-            item_phantom: Default::default(),
-        };
-        check_status(unsafe { uhd_sys::uhd_rx_streamer_make(&mut streamer.handle) })?;
+        let mut streamer = ReceiveStreamer::new();
+        check_status(unsafe { uhd_sys::uhd_rx_streamer_make(streamer.handle_mut()) })?;
         // Associate streamer with USRP
         check_status(unsafe {
-            uhd_sys::uhd_usrp_get_rx_stream(self.0, &mut args_c, streamer.handle)
+            uhd_sys::uhd_usrp_get_rx_stream(self.0, &mut args_c, streamer.handle())
         })?;
 
         Ok(streamer)

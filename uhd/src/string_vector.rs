@@ -169,7 +169,7 @@ mod tests {
         let mut vector = StringVector::new()?;
         assert_eq!(None, vector.get(0));
         let value0 = "slithy toves";
-        vector.append(value0)?;
+        vector.push(value0.to_owned())?;
         assert_eq!(Some(Ok(value0.to_owned())), vector.get(0));
         Ok(())
     }
@@ -207,7 +207,7 @@ mod tests {
         mome raths outgrabe mome raths outgrabe mome raths outgrabe mome raths outgrabe mome raths \
         outgrabe mome raths outgrabe mome raths outgrabe mome raths outgrabe mome raths outgrabe \
         mome raths outgrabe mome raths outgrabe mome raths outgrabe ";
-        vector.append(value0)?;
+        vector.push(value0.to_owned())?;
         assert_eq!(Some(Ok(value0.to_owned())), vector.get(0));
         Ok(())
     }

@@ -7,6 +7,14 @@ use std::marker::PhantomData;
 /// Arguments used to create a stream
 ///
 /// The type parameter I defines the item type and host format.
+///
+/// The default stream arguments use wire format `sc16` and host format `fc32`:
+/// ```
+/// use uhd::StreamArgs;
+/// use num_complex::Complex32;
+/// let args = StreamArgs::<Complex32>::new("sc16");
+/// ```
+///
 #[derive(Debug, Clone)]
 pub struct StreamArgs<I> {
     host_format: PhantomData<I>,
@@ -38,10 +46,12 @@ impl<I> StreamArgs<I> {
 }
 
 impl<I> Default for StreamArgs<I> {
+    /// Creates stream arguments with wire format `sc16`, host format determined by the type `I`,
+    /// and default arguments and channels
     fn default() -> Self {
         StreamArgs {
             host_format: PhantomData::default(),
-            wire_format: "fc32".to_string(),
+            wire_format: "sc16".to_string(),
             args: "".to_string(),
             // Empty list = just channel 0
             channels: vec![],

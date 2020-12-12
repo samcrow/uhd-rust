@@ -1,3 +1,17 @@
+//!
+//! # `uhd`: Bindings to the USRP Hardware Driver library
+//!
+//! ## Status
+//!
+//! Basic functionality for configuring some USRP settings and receiving samples is working.
+//!
+//! Some things are not yet implemented:
+//!
+//! * Various configuration options related to transmitting
+//! * Some configuration options related to receiving and time synchronization
+//! * Sending samples to transmit
+//!
+
 extern crate num_complex;
 extern crate uhd_sys;
 

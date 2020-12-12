@@ -5,6 +5,10 @@ authors = ["Sam Crow <scrow@eng.ucsd.edu>"]
 edition = "2018"
 description = "Bindings to the UHD (USRP Hardware Driver) library, which provides support for Ettus Research / National Instruments Universal Software Radio Peripheral devices"
 repository = "https://github.com/samcrow/uhd-rust"
+license = "MIT OR Apache-2.0"
+keywords = ["sdr", "usrp", "radio"]
+categories = ["hardware-support"]
+
 
 [dependencies]
 num-complex = "0.3.1"
