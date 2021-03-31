@@ -1,6 +1,6 @@
 [package]
 name = "uhd-sys"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Sam Crow <scrow@eng.ucsd.edu>"]
 repository = "https://github.com/samcrow/uhd-rust"
 edition = "2018"

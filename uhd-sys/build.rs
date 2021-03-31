@@ -24,13 +24,20 @@ fn generate_bindings(include_path: &Path) {
     let out_dir = PathBuf::from(env::var_os("OUT_DIR").unwrap());
     let out_path = out_dir.join("bindgen.rs");
 
-    let bindings = bindgen::builder()
+    let mut builder = bindgen::builder()
         .whitelist_function("^uhd.+")
         .default_enum_style(bindgen::EnumVariation::ModuleConsts)
         .header(usrp_header.to_string_lossy().to_owned())
         // Add the include directory to ensure that #includes in the header work correctly
-        .clang_arg(format!("-I{}", include_path.to_string_lossy().to_owned()))
-        .generate()
+        .clang_arg(format!("-I{}", include_path.to_string_lossy().to_owned()));
+
+    // On Raspberry Pi devices, the include directories require some adjustment.
+    let target = env::var("TARGET").expect("No TARGET environment variable");
+    if target == "armv7-unknown-linux-gnueabihf" {
+        builder = builder.clang_arg("-I/usr/lib/gcc/arm-linux-gnueabihf/8/include");
+    }
+
+    let bindings = builder.generate()
         .expect("Failed to generate bindings");
     bindings
         .write_to_file(out_path)
