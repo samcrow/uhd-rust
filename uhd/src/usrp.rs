@@ -419,14 +419,17 @@ impl Usrp {
     /// Returns the USRP's current time. Commands can be scheduled relative to this time.
     pub fn get_current_time(&self, mboard: usize) -> Result<TimeSpec, Error> {
         let mut time = TimeSpec::default();
+        let mut seconds_time_t: libc::time_t = Default::default();
+
         check_status(unsafe {
             uhd_sys::uhd_usrp_get_time_now(
                 self.0,
                 mboard as _,
-                &mut time.seconds,
+                &mut seconds_time_t,
                 &mut time.fraction,
             )
         })?;
+        time.seconds = seconds_time_t.into();
         Ok(time)
     }
 

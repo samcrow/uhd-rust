@@ -22,14 +22,18 @@ impl ReceiveMetadata {
     pub fn time_spec(&self) -> Option<TimeSpec> {
         if self.has_time_spec() {
             let mut time = TimeSpec::default();
+            let mut seconds_time_t: libc::time_t = Default::default();
+
             check_status(unsafe {
                 uhd_sys::uhd_rx_metadata_time_spec(
                     self.handle,
-                    &mut time.seconds,
+                    &mut seconds_time_t,
                     &mut time.fraction,
                 )
             })
             .unwrap();
+            // Convert seconds from time_t to i64
+            time.seconds = seconds_time_t.into();
             Some(time)
         } else {
             None

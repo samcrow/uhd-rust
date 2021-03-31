@@ -12,6 +12,7 @@ categories = ["hardware-support"]
 
 [dependencies]
 num-complex = "0.3.1"
+libc = "0.2"
 
 [dependencies.uhd-sys]
 version = "0.1.1"

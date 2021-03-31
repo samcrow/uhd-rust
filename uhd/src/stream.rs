@@ -1,6 +1,6 @@
 use crate::TimeSpec;
 use num_complex::{Complex, Complex32, Complex64};
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 use std::ffi::{CString, NulError};
 use std::marker::PhantomData;
 
@@ -163,6 +163,12 @@ pub enum StreamTime {
 }
 
 impl StreamCommand {
+    /// Converts this command into a C `uhd_stream_cmd_t`
+    ///
+    /// # Panics
+    ///
+    /// This function panics if this command is `Later` and contains a time with
+    /// a seconds field that is too large for a time_t.
     pub(crate) fn as_c_command(&self) -> uhd_sys::uhd_stream_cmd_t {
         let mut c_cmd = uhd_sys::uhd_stream_cmd_t {
             stream_mode: uhd_sys::uhd_stream_mode_t::UHD_STREAM_MODE_START_CONTINUOUS,
@@ -175,10 +181,16 @@ impl StreamCommand {
         match &self.time {
             StreamTime::Now => c_cmd.stream_now = true,
             StreamTime::Later(timespec) => {
-                c_cmd.time_spec_full_secs = timespec.seconds;
+                c_cmd.time_spec_full_secs = timespec
+                    .seconds
+                    .try_into()
+                    .expect("Timespec seconds too large to fit into a time_t");
                 c_cmd.time_spec_frac_secs = timespec.fraction;
             }
         }
+
+        // In some versions of UHD, num_samps is a size_t. In other versions, it's a uint64_t.
+        // The Rust code always uses u64, and converts here.
 
         match self.command_type {
             StreamCommandType::StartContinuous => {
@@ -189,11 +201,15 @@ impl StreamCommand {
             }
             StreamCommandType::CountAndDone(samples) => {
                 c_cmd.stream_mode = uhd_sys::uhd_stream_mode_t::UHD_STREAM_MODE_NUM_SAMPS_AND_DONE;
-                c_cmd.num_samps = samples;
+                c_cmd.num_samps = samples
+                    .try_into()
+                    .expect("Number of samples too large for size_t");
             }
             StreamCommandType::CountAndMore(samples) => {
                 c_cmd.stream_mode = uhd_sys::uhd_stream_mode_t::UHD_STREAM_MODE_NUM_SAMPS_AND_MORE;
-                c_cmd.num_samps = samples;
+                c_cmd.num_samps = samples
+                    .try_into()
+                    .expect("Number of samples too large for size_t");
             }
         };
         c_cmd

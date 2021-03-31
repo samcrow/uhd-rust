@@ -12,6 +12,7 @@
 //! * Sending samples to transmit
 //!
 
+extern crate libc;
 extern crate num_complex;
 extern crate uhd_sys;
 
@@ -47,6 +48,9 @@ pub use crate::usrp::Usrp;
 /// a second
 #[derive(Debug, Clone, Default, PartialOrd, PartialEq)]
 pub struct TimeSpec {
+    // In some versions of UHD, the corresponding field of uhd::time_spec_t is a time_t.
+    // In other versions, it's a int64_t. The Rust code does conversion to keep this
+    // an i64.
     pub seconds: i64,
     pub fraction: f64,
 }
