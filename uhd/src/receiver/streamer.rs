@@ -1,11 +1,15 @@
 use std::marker::PhantomData;
+use std::os::raw::c_void;
 use std::ptr;
 
-use crate::error::{check_status, Error};
-use crate::receive_metadata::ReceiveMetadata;
-use crate::stream::StreamCommand;
-use crate::usrp::Usrp;
-use std::os::raw::c_void;
+use num_complex::Complex32;
+
+use crate::{
+    error::{check_status, Error, Result},
+    stream::StreamCommand,
+    usrp::Usrp,
+    ReceiveMetadata, StreamCommandType,
+};
 
 /// A streamer used to receive samples from a USRP
 ///
@@ -51,7 +55,7 @@ impl<I> ReceiveStreamer<'_, I> {
     /// Sends a stream command to the USRP
     ///
     /// This can be used to start or stop streaming
-    pub fn send_command(&self, command: &StreamCommand) -> Result<(), Error> {
+    pub fn send_command(&mut self, command: &StreamCommand) -> Result<(), Error> {
         let command_c = command.as_c_command();
         check_status(unsafe { uhd_sys::uhd_rx_streamer_issue_stream_cmd(self.handle, &command_c) })
     }
@@ -130,6 +134,23 @@ impl<I> ReceiveStreamer<'_, I> {
     pub fn receive_simple(&mut self, buffer: &mut [I]) -> Result<ReceiveMetadata, Error> {
         self.receive(&mut [buffer], 0.1, false)
     }
+
+    pub fn receive_for(&mut self, dur: std::time::Duration) -> Result<Vec<Complex32>> {
+        let a = dur.as_secs();
+        let b = dur.subsec_millis();
+
+        self.send_command(&StreamCommand {
+            command_type: StreamCommandType::CountAndDone(100),
+            time: crate::StreamTime::Now,
+        })?;
+    }
+
+    pub fn start_receiving(&mut self, buffer: &mut [I]) -> Result<ReceiveMetadata, Error> {
+        let mut metadata = ReceiveMetadata::default();
+        let mut samples_received = 0usize;
+
+        Ok(metadata)
+    }
 }
 
 /// Checks that all provided buffers have the same length. Returns the length of the buffers,
@@ -139,10 +160,9 @@ fn check_equal_buffer_lengths<I>(buffers: &mut [&mut [I]]) -> usize {
         .iter()
         .fold(None, |prev_size, buffer| {
             match prev_size {
-                None => {
-                    // Store the size of the first buffer
-                    Some(buffer.len())
-                }
+                // Store the size of the first buffer
+                None => Some(buffer.len()),
+
                 Some(prev_size) => {
                     assert_eq!(prev_size, buffer.len(), "Unequal buffer sizes");
                     Some(prev_size)

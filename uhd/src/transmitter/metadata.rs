@@ -5,14 +5,14 @@ use crate::utils::copy_string;
 use crate::TimeSpec;
 
 /// Data about a receive operation
-pub struct ReceiveMetadata {
+pub struct TransmitMetadata {
     /// Handle to C++ object
     handle: uhd_sys::uhd_rx_metadata_handle,
     /// Number of samples received
     samples: usize,
 }
 
-impl ReceiveMetadata {
+impl TransmitMetadata {
     pub fn new() -> Self {
         Default::default()
     }
@@ -116,26 +116,26 @@ impl ReceiveMetadata {
     }
 
     /// Returns the error associated with the receive operation, if any
-    pub fn last_error(&self) -> Option<ReceiveError> {
+    pub fn last_error(&self) -> Option<TransmitError> {
         let out_of_sequence = self.out_of_sequence();
         use uhd_sys::uhd_rx_metadata_error_code_t::*;
         let kind = match self.error_code() {
-            UHD_RX_METADATA_ERROR_CODE_TIMEOUT => ReceiveErrorKind::Timeout,
-            UHD_RX_METADATA_ERROR_CODE_LATE_COMMAND => ReceiveErrorKind::LateCommand,
-            UHD_RX_METADATA_ERROR_CODE_BROKEN_CHAIN => ReceiveErrorKind::BrokenChain,
-            UHD_RX_METADATA_ERROR_CODE_OVERFLOW if !out_of_sequence => ReceiveErrorKind::Overflow,
+            UHD_RX_METADATA_ERROR_CODE_TIMEOUT => TransmitErrorKind::Timeout,
+            UHD_RX_METADATA_ERROR_CODE_LATE_COMMAND => TransmitErrorKind::LateCommand,
+            UHD_RX_METADATA_ERROR_CODE_BROKEN_CHAIN => TransmitErrorKind::BrokenChain,
+            UHD_RX_METADATA_ERROR_CODE_OVERFLOW if !out_of_sequence => TransmitErrorKind::Overflow,
             UHD_RX_METADATA_ERROR_CODE_OVERFLOW if out_of_sequence => {
-                ReceiveErrorKind::OutOfSequence
+                TransmitErrorKind::OutOfSequence
             }
-            UHD_RX_METADATA_ERROR_CODE_ALIGNMENT => ReceiveErrorKind::Alignment,
-            UHD_RX_METADATA_ERROR_CODE_BAD_PACKET => ReceiveErrorKind::BadPacket,
+            UHD_RX_METADATA_ERROR_CODE_ALIGNMENT => TransmitErrorKind::Alignment,
+            UHD_RX_METADATA_ERROR_CODE_BAD_PACKET => TransmitErrorKind::BadPacket,
             UHD_RX_METADATA_ERROR_CODE_NONE => {
                 // Not actually an error
                 return None;
             }
             _ => {
                 // Some other error
-                ReceiveErrorKind::Other
+                TransmitErrorKind::Other
             }
         };
         let message = copy_string(|buffer, length| unsafe {
@@ -143,7 +143,7 @@ impl ReceiveMetadata {
         })
         .ok();
 
-        Some(ReceiveError { kind, message })
+        Some(TransmitError { kind, message })
     }
 
     pub(crate) fn handle_mut(&mut self) -> &mut uhd_sys::uhd_rx_metadata_handle {
@@ -152,31 +152,31 @@ impl ReceiveMetadata {
 }
 
 // Thread safety: The uhd_rx_metadata struct just stores data. All exposed functions read fields.
-unsafe impl Send for ReceiveMetadata {}
-unsafe impl Sync for ReceiveMetadata {}
+unsafe impl Send for TransmitMetadata {}
+unsafe impl Sync for TransmitMetadata {}
 
-impl Default for ReceiveMetadata {
+impl Default for TransmitMetadata {
     fn default() -> Self {
         let mut handle: uhd_sys::uhd_rx_metadata_handle = ptr::null_mut();
         check_status(unsafe { uhd_sys::uhd_rx_metadata_make(&mut handle) }).unwrap();
-        ReceiveMetadata { handle, samples: 0 }
+        TransmitMetadata { handle, samples: 0 }
     }
 }
 
-impl Drop for ReceiveMetadata {
+impl Drop for TransmitMetadata {
     fn drop(&mut self) {
         let _ = unsafe { uhd_sys::uhd_rx_metadata_free(&mut self.handle) };
     }
 }
 
 mod fmt {
-    use super::{ReceiveError, ReceiveMetadata};
-    use crate::ReceiveErrorKind;
+    use super::*;
+    use super::{TransmitError, TransmitMetadata};
     use std::fmt::{Debug, Display, Formatter, Result};
 
-    impl Debug for ReceiveMetadata {
+    impl Debug for TransmitMetadata {
         fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-            f.debug_struct("ReceiveMetadata")
+            f.debug_struct("TransmitMetadata")
                 .field("time_spec", &self.time_spec())
                 .field("more_fragments", &self.more_fragments())
                 .field("fragment_offset", &self.fragment_offset())
@@ -186,19 +186,19 @@ mod fmt {
         }
     }
 
-    impl Display for ReceiveError {
+    impl Display for TransmitError {
         fn fmt(&self, f: &mut Formatter<'_>) -> Result {
             match self.kind {
-                ReceiveErrorKind::Timeout => write!(f, "No packet received"),
-                ReceiveErrorKind::LateCommand => write!(f, "Command timestamp was in the past"),
-                ReceiveErrorKind::BrokenChain => write!(f, "Expected another stream command"),
-                ReceiveErrorKind::Overflow => {
+                TransmitErrorKind::Timeout => write!(f, "No packet received"),
+                TransmitErrorKind::LateCommand => write!(f, "Command timestamp was in the past"),
+                TransmitErrorKind::BrokenChain => write!(f, "Expected another stream command"),
+                TransmitErrorKind::Overflow => {
                     write!(f, "An internal receive buffer has been filled")
                 }
-                ReceiveErrorKind::OutOfSequence => write!(f, "Sequence error"),
-                ReceiveErrorKind::Alignment => write!(f, "Multi-channel alignment failed"),
-                ReceiveErrorKind::BadPacket => write!(f, "A packet could not be parsed"),
-                ReceiveErrorKind::Other => write!(f, "Other error"),
+                TransmitErrorKind::OutOfSequence => write!(f, "Sequence error"),
+                TransmitErrorKind::Alignment => write!(f, "Multi-channel alignment failed"),
+                TransmitErrorKind::BadPacket => write!(f, "A packet could not be parsed"),
+                TransmitErrorKind::Other => write!(f, "Other error"),
             }?;
             match self.message {
                 Some(ref message) if !message.is_empty() => write!(f, ": {}", message)?,
@@ -210,13 +210,13 @@ mod fmt {
 }
 
 #[derive(Debug)]
-pub struct ReceiveError {
-    kind: ReceiveErrorKind,
+pub struct TransmitError {
+    kind: TransmitErrorKind,
     message: Option<String>,
 }
 
-impl ReceiveError {
-    pub fn kind(&self) -> ReceiveErrorKind {
+impl TransmitError {
+    pub fn kind(&self) -> TransmitErrorKind {
         self.kind.clone()
     }
     pub fn message(&self) -> Option<&str> {
@@ -224,11 +224,11 @@ impl ReceiveError {
     }
 }
 
-impl std::error::Error for ReceiveError {}
+impl std::error::Error for TransmitError {}
 
 #[non_exhaustive]
 #[derive(Debug, Clone)]
-pub enum ReceiveErrorKind {
+pub enum TransmitErrorKind {
     Timeout,
     LateCommand,
     BrokenChain,
@@ -241,11 +241,11 @@ pub enum ReceiveErrorKind {
 
 #[cfg(test)]
 mod test {
-    use super::ReceiveMetadata;
+    use super::TransmitMetadata;
 
     #[test]
     fn default_rx_metadata() {
-        let metadata = ReceiveMetadata::default();
+        let metadata = TransmitMetadata::default();
         assert_eq!(None, metadata.time_spec());
         assert_eq!(false, metadata.start_of_burst());
         assert_eq!(false, metadata.end_of_burst());

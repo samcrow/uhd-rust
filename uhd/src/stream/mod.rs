@@ -149,9 +149,16 @@ pub struct StreamCommand {
 
 #[derive(Debug, Clone)]
 pub enum StreamCommandType {
+    /// UHD_STREAM_MODE_START_CONTINUOUS
     StartContinuous,
+
+    /// UHD_STREAM_MODE_STOP_CONTINUOUS
     StopContinuous,
+
+    /// UHD_STREAM_MODE_NUM_SAMPS_AND_DONE
     CountAndDone(u64),
+
+    /// UHD_STREAM_MODE_NUM_SAMPS_AND_MORE
     CountAndMore(u64),
 }
 

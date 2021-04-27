@@ -1,17 +1,16 @@
+use crate::{
+    error::{check_status, Error},
+    motherboard_eeprom::MotherboardEeprom,
+    range::MetaRange,
+    stream::{Item, StreamArgs, StreamArgsC},
+    string_vector::StringVector,
+    utils::copy_string,
+    ReceiveInfo, ReceiveStreamer, {DaughterBoardEeprom, TimeSpec, TuneRequest, TuneResult},
+};
+
 use std::convert::TryInto;
 use std::ffi::CString;
 use std::ptr;
-
-use crate::error::{check_status, Error};
-use crate::motherboard_eeprom::MotherboardEeprom;
-use crate::range::MetaRange;
-use crate::receive_info::ReceiveInfo;
-use crate::receive_streamer::ReceiveStreamer;
-use crate::stream::{Item, StreamArgs, StreamArgsC};
-use crate::string_vector::StringVector;
-use crate::utils::copy_string;
-use crate::{DaughterBoardEeprom, TimeSpec, TuneRequest, TuneResult};
-
 /// A connection to a USRP device
 pub struct Usrp(uhd_sys::uhd_usrp_handle);
 
@@ -146,7 +145,7 @@ impl Usrp {
     }
 
     /// Clears the command time (?), causing stream commands to be sent immediately
-    pub fn clear_command_time(&self, mboard: usize) -> Result<(), Error> {
+    pub fn clear_command_time(&mut self, mboard: usize) -> Result<(), Error> {
         check_status(unsafe { uhd_sys::uhd_usrp_clear_command_time(self.0, mboard as _) })
     }
 
@@ -234,7 +233,12 @@ impl Usrp {
     /// address: The address of the register
     /// value: The value to write
     /// mboard: The index of the board to write to (normally 0 when there is only one USRP)
-    pub fn set_user_register(&self, address: u8, value: u32, mboard: usize) -> Result<(), Error> {
+    pub fn set_user_register(
+        &mut self,
+        address: u8,
+        value: u32,
+        mboard: usize,
+    ) -> Result<(), Error> {
         check_status(unsafe {
             uhd_sys::uhd_usrp_set_user_register(self.0, address, value, mboard as _)
         })
@@ -369,7 +373,10 @@ impl Usrp {
     }
 
     /// Opens a stream that can be used to receive samples
-    pub fn get_rx_stream<I>(&self, args: &StreamArgs<I>) -> Result<ReceiveStreamer<'_, I>, Error>
+    pub fn get_rx_stream<I>(
+        &mut self,
+        args: &StreamArgs<I>,
+    ) -> Result<ReceiveStreamer<'_, I>, Error>
     where
         I: Item,
     {
@@ -434,12 +441,12 @@ impl Usrp {
     }
 
     /// Enables or disables the receive automatic gain control
-    pub fn set_rx_agc_enabled(&self, enabled: bool, channel: usize) -> Result<(), Error> {
+    pub fn set_rx_agc_enabled(&mut self, enabled: bool, channel: usize) -> Result<(), Error> {
         check_status(unsafe { uhd_sys::uhd_usrp_set_rx_agc(self.0, enabled, channel as _) })
     }
 
     /// Sets the antenna used to receive
-    pub fn set_rx_antenna(&self, antenna: &str, channel: usize) -> Result<(), Error> {
+    pub fn set_rx_antenna(&mut self, antenna: &str, channel: usize) -> Result<(), Error> {
         let antenna = CString::new(antenna)?;
         check_status(unsafe {
             uhd_sys::uhd_usrp_set_rx_antenna(self.0, antenna.as_ptr(), channel as _)
@@ -447,12 +454,12 @@ impl Usrp {
     }
 
     /// Sets the receive bandwidth
-    pub fn set_rx_bandwidth(&self, bandwidth: f64, channel: usize) -> Result<(), Error> {
+    pub fn set_rx_bandwidth(&mut self, bandwidth: f64, channel: usize) -> Result<(), Error> {
         check_status(unsafe { uhd_sys::uhd_usrp_set_rx_bandwidth(self.0, bandwidth, channel as _) })
     }
 
     /// Enables or disables DC offset correction
-    pub fn set_rx_dc_offset_enabled(&self, enabled: bool, channel: usize) -> Result<(), Error> {
+    pub fn set_rx_dc_offset_enabled(&mut self, enabled: bool, channel: usize) -> Result<(), Error> {
         check_status(unsafe {
             uhd_sys::uhd_usrp_set_rx_dc_offset_enabled(self.0, enabled, channel as _)
         })
@@ -460,7 +467,7 @@ impl Usrp {
 
     /// Sets the receive center frequency
     pub fn set_rx_frequency(
-        &self,
+        &mut self,
         request: &TuneRequest,
         channel: usize,
     ) -> Result<TuneResult, Error> {
@@ -485,7 +492,7 @@ impl Usrp {
     }
 
     /// Sets the receive gain
-    pub fn set_rx_gain(&self, gain: f64, channel: usize, name: &str) -> Result<(), Error> {
+    pub fn set_rx_gain(&mut self, gain: f64, channel: usize, name: &str) -> Result<(), Error> {
         let name = CString::new(name)?;
         check_status(unsafe {
             uhd_sys::uhd_usrp_set_rx_gain(self.0, gain, channel as _, name.as_ptr())
@@ -493,12 +500,12 @@ impl Usrp {
     }
 
     /// Sets the receive sample rate
-    pub fn set_rx_sample_rate(&self, rate: f64, channel: usize) -> Result<(), Error> {
+    pub fn set_rx_sample_rate(&mut self, rate: f64, channel: usize) -> Result<(), Error> {
         check_status(unsafe { uhd_sys::uhd_usrp_set_rx_rate(self.0, rate, channel as _) })
     }
 
     /// Sets the antenna used to transmit
-    pub fn set_tx_antenna(&self, antenna: &str, channel: usize) -> Result<(), Error> {
+    pub fn set_tx_antenna(&mut self, antenna: &str, channel: usize) -> Result<(), Error> {
         let antenna = CString::new(antenna)?;
         check_status(unsafe {
             uhd_sys::uhd_usrp_set_tx_antenna(self.0, antenna.as_ptr(), channel as _)

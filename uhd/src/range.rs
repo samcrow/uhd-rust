@@ -1,5 +1,4 @@
 use crate::error::{check_status, Error};
-use crate::ErrorKind;
 use std::ptr;
 
 /// A range of floating-point values, and a step-by amount
@@ -68,9 +67,9 @@ impl MetaRange {
         match check_status(unsafe { uhd_sys::uhd_meta_range_at(self.0, index as _, &mut range.0) })
         {
             Ok(()) => Some(range),
-            Err(e) => match e.kind() {
+            Err(e) => match e {
                 // StdExcept usually indicates a std::out_of_range because index >= length
-                ErrorKind::StdExcept => None,
+                Error::StdExcept => None,
                 _ => panic!("Unexpected UHD error: {}", e),
             },
         }

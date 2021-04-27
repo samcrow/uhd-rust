@@ -3,7 +3,7 @@ use std::ffi::{CString, NulError};
 use std::ptr;
 
 use crate::check_status;
-use crate::error::{Error, ErrorKind};
+use crate::error::Error;
 use crate::utils::copy_string;
 
 /// A handle to a std::vector of std::strings
@@ -13,11 +13,9 @@ impl StringVector {
     /// Creates a new empty string vector
     pub fn new() -> Result<Self, Error> {
         let mut handle: uhd_sys::uhd_string_vector_handle = ptr::null_mut();
-        let status = unsafe { uhd_sys::uhd_string_vector_make(&mut handle) };
-        match Error::from_code_with_last_error(status) {
-            Some(e) => Err(e),
-            None => Ok(StringVector(handle)),
-        }
+
+        check_status(unsafe { uhd_sys::uhd_string_vector_make(&mut handle) })
+            .map(|_| StringVector(handle))
     }
 
     /// Returns the number of strings in this vector
@@ -45,8 +43,8 @@ impl StringVector {
         });
         match status {
             Ok(value) => Some(Ok(value)),
-            Err(e) => match e.kind() {
-                ErrorKind::StdExcept => {
+            Err(e) => match e {
+                Error::StdExcept => {
                     // This is most likely an std::out_of_range because the index was >= length.
                     None
                 }
@@ -160,24 +158,25 @@ mod tests {
     #[test]
     fn string_vector_empty() -> Result<(), Box<dyn std::error::Error>> {
         let vector = StringVector::new()?;
-        assert_eq!(None, vector.get(0));
+        assert!(vector.get(0).is_none());
         Ok(())
     }
 
     #[test]
     fn string_vector_small() -> Result<(), Box<dyn std::error::Error>> {
         let mut vector = StringVector::new()?;
-        assert_eq!(None, vector.get(0));
+        assert!(vector.get(0).is_none());
         let value0 = "slithy toves";
         vector.push(value0.to_owned())?;
-        assert_eq!(Some(Ok(value0.to_owned())), vector.get(0));
+
+        assert!(vector.get(0).unwrap().unwrap() == value0);
         Ok(())
     }
 
     #[test]
     fn string_vector_large() -> Result<(), Box<dyn std::error::Error>> {
         let mut vector = StringVector::new()?;
-        assert_eq!(None, vector.get(0));
+        assert!(vector.get(0).is_none());
         let value0 = "mome raths outgrabe mome raths outgrabe mome raths outgrabe mome raths \
         outgrabe mome raths outgrabe mome raths outgrabe mome raths outgrabe mome raths outgrabe \
         mome raths outgrabe mome raths outgrabe mome raths outgrabe mome raths outgrabe mome raths \
@@ -208,7 +207,7 @@ mod tests {
         outgrabe mome raths outgrabe mome raths outgrabe mome raths outgrabe mome raths outgrabe \
         mome raths outgrabe mome raths outgrabe mome raths outgrabe ";
         vector.push(value0.to_owned())?;
-        assert_eq!(Some(Ok(value0.to_owned())), vector.get(0));
+        assert!(vector.get(0).unwrap().unwrap() == value0);
         Ok(())
     }
 }

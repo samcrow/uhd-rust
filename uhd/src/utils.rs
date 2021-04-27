@@ -1,6 +1,6 @@
 use std::os::raw::c_char;
 
-use crate::error::{check_status, Error, ErrorKind};
+use crate::error::{check_status, Error};
 
 /// Initial number of bytes to allocate when copying a string out of a string vector
 const INITIAL_SIZE: usize = 128;
@@ -36,7 +36,7 @@ where
             buffer.truncate(null_index);
             buffer.shrink_to_fit();
             // Try to convert to UTF-8
-            return String::from_utf8(buffer).map_err(|_| Error::new(ErrorKind::Utf8));
+            return String::from_utf8(buffer).map_err(|_| Error::Utf8);
         } else {
             // If there is no null, the error message was longer than BUFFER_LENGTH.
             // Try again with the next size.
@@ -44,7 +44,7 @@ where
         }
     }
     // String is too large to fully copy
-    Err(Error::new(ErrorKind::StringLength))
+    Err(Error::StringLength)
 }
 
 /// An iterator over buffer sizes that yields INITIAL_SIZE and then double the previous value
