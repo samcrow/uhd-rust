@@ -1,4 +1,4 @@
-use std::os::raw::c_char;
+use std::{fmt::Debug, os::raw::c_char};
 
 use crate::error::{check_status, Error};
 
@@ -71,6 +71,14 @@ impl Iterator for BufferSizes {
             self.next *= 2;
             Some(current)
         }
+    }
+}
+
+pub fn alloc_boxed_slice<T: Default + Clone, const LEN: usize>() -> Box<[T; LEN]> {
+    use std::convert::TryInto;
+    match vec![T::default(); LEN].into_boxed_slice().try_into() {
+        Ok(a) => a,
+        Err(_) => unreachable!(),
     }
 }
 

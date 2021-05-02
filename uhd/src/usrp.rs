@@ -5,7 +5,7 @@ use crate::{
     stream::{Item, StreamArgs, StreamArgsC},
     string_vector::StringVector,
     utils::copy_string,
-    ReceiveInfo, ReceiveStreamer, {DaughterBoardEeprom, TimeSpec, TuneRequest, TuneResult},
+    DaughterBoardEeprom, ReceiveInfo, ReceiveStreamer, TimeSpec, TuneRequest, TuneResult,
 };
 
 use std::convert::TryInto;

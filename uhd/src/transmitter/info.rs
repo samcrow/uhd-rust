@@ -3,7 +3,7 @@ use std::str::Utf8Error;
 
 /// Information about a receive channel
 #[derive(Debug, Clone)]
-pub struct ReceiveInfo {
+pub struct TransmitInfo {
     motherboard_id: String,
     motherboard_name: String,
     motherboard_serial: String,
@@ -14,7 +14,7 @@ pub struct ReceiveInfo {
     antenna: String,
 }
 
-impl ReceiveInfo {
+impl TransmitInfo {
     pub fn motherboard_id(&self) -> &str {
         &self.motherboard_id
     }
@@ -40,16 +40,16 @@ impl ReceiveInfo {
         &self.antenna
     }
 
-    pub(crate) unsafe fn from_c(info_c: &uhd_sys::uhd_usrp_rx_info_t) -> Result<Self, Utf8Error> {
-        Ok(ReceiveInfo {
+    pub(crate) unsafe fn from_c(info_c: &uhd_sys::uhd_usrp_tx_info_t) -> Result<Self, Utf8Error> {
+        Ok(TransmitInfo {
             motherboard_id: CStr::from_ptr(info_c.mboard_id).to_str()?.into(),
             motherboard_name: CStr::from_ptr(info_c.mboard_name).to_str()?.into(),
             motherboard_serial: CStr::from_ptr(info_c.mboard_serial).to_str()?.into(),
-            daughterboard_id: CStr::from_ptr(info_c.rx_id).to_str()?.into(),
-            daughterboard_serial: CStr::from_ptr(info_c.rx_serial).to_str()?.into(),
-            subdev_name: CStr::from_ptr(info_c.rx_subdev_name).to_str()?.into(),
-            subdev_spec: CStr::from_ptr(info_c.rx_subdev_spec).to_str()?.into(),
-            antenna: CStr::from_ptr(info_c.rx_antenna).to_str()?.into(),
+            daughterboard_id: CStr::from_ptr(info_c.tx_id).to_str()?.into(),
+            daughterboard_serial: CStr::from_ptr(info_c.tx_serial).to_str()?.into(),
+            subdev_name: CStr::from_ptr(info_c.tx_subdev_name).to_str()?.into(),
+            subdev_spec: CStr::from_ptr(info_c.tx_subdev_spec).to_str()?.into(),
+            antenna: CStr::from_ptr(info_c.tx_antenna).to_str()?.into(),
         })
     }
 }

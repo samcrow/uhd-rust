@@ -3,9 +3,10 @@ use std::{env::set_var, time::Duration};
 use anyhow::{anyhow, Context, Result};
 use num_complex::Complex32;
 use tap::Pipe;
-use uhd::{self, StreamCommand, StreamCommandType, TuneRequest, Usrp};
+use uhd::{self, StreamCommand, StreamCommandType, StreamTime, TuneRequest, Usrp};
 
 const CHANNEL: usize = 0;
+const NUM_SAMPLES: usize = 1000;
 
 pub fn main() -> Result<()> {
     set_var("RUST_LOG", "DEBUG");
@@ -25,42 +26,17 @@ pub fn main() -> Result<()> {
     usrp.set_rx_antenna("TX/RX", CHANNEL)?;
     usrp.set_rx_frequency(&TuneRequest::with_frequency(2.4e9), CHANNEL)?;
 
-    // std::thread::spawn(move || {
-    // usrp.set_rx_sample_rate(2e6 as f64, CHANNEL)?;
-    // usrp.set_rx_gain(50, channel, name)
-
-    // dbg!(usrp.get_tx_antennas(CHANNEL)?);
-    // dbg!(usrp.get_fe_tx_freq_range(CHANNEL)?);
-    // dbg!(usrp.get_normalized_tx_gain(CHANNEL)?);
-
-    // Set the stream type to be "fc32" which means "float complex 32"
-    // This gets overridden anyway, because we use the Compelex3D format
-    // See: https://files.ettus.com/manual/structuhd_1_1stream__args__t.html#a602a64b4937a85dba84e7f724387e252
     let mut receiver = usrp
         .get_rx_stream(&uhd::StreamArgs::<Complex32>::new("fc32"))
         .unwrap();
 
-    // receiver
-    //     .send_command(&StreamCommand {
-    //         command_type: StreamCommandType::CountAndDone(10),
-    //         time: uhd::StreamTime::Now,
-    //     })
-    //     .unwrap();
-    // let out_buffers = (0..receiver.num_channels())
-    //     .map(|_| vec![0; 10000].into_boxed_slice())
-    //     .collect::<Vec<_>>()
-    //     .as_slice();
+    let mut single_chan = uhd::alloc_boxed_slice::<Complex32, NUM_SAMPLES>();
 
-    let mut single_chan = vec![Complex32::default(); 1_00].into_boxed_slice();
-    let mut bufs = [single_chan.as_mut()];
-    let stat = receiver.receive(&mut bufs, 1.0, false).unwrap();
+    let stat = receiver.lock_onto_frequency(Duration::from_secs(5))?;
+    let stat = receiver.receive_simple(single_chan.as_mut())?;
 
     dbg!(stat);
-
-    // log::info!("Samples received!");
-    // log::info!("{:#?}", single_chan);
-    // });
-    // std::thread::sleep(Duration::from_millis(10000));
+    dbg!(single_chan);
 
     Ok(())
 }

@@ -166,7 +166,7 @@ pub enum StreamCommandType {
 #[derive(Debug, Clone)]
 pub enum StreamTime {
     Now,
-    Later(TimeSpec),
+    Later(std::time::Duration),
 }
 
 impl StreamCommand {
@@ -187,12 +187,9 @@ impl StreamCommand {
 
         match &self.time {
             StreamTime::Now => c_cmd.stream_now = true,
-            StreamTime::Later(timespec) => {
-                c_cmd.time_spec_full_secs = timespec
-                    .seconds
-                    .try_into()
-                    .expect("Timespec seconds too large to fit into a time_t");
-                c_cmd.time_spec_frac_secs = timespec.fraction;
+            StreamTime::Later(dur) => {
+                c_cmd.time_spec_full_secs = dur.as_secs() as i64;
+                c_cmd.time_spec_frac_secs = dur.subsec_millis() as f64 / 1000.0
             }
         }
 

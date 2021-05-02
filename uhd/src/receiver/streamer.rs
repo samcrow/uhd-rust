@@ -1,6 +1,6 @@
-use std::marker::PhantomData;
-use std::os::raw::c_void;
 use std::ptr;
+use std::{marker::PhantomData, time::Duration};
+use std::{os::raw::c_void, time::Instant};
 
 use num_complex::Complex32;
 
@@ -131,25 +131,43 @@ impl<I> ReceiveStreamer<'_, I> {
     }
 
     /// Receives samples on a single channel with a timeout of 0.1 seconds and one_packet disabled
-    pub fn receive_simple(&mut self, buffer: &mut [I]) -> Result<ReceiveMetadata, Error> {
-        self.receive(&mut [buffer], 0.1, false)
-    }
-
-    pub fn receive_for(&mut self, dur: std::time::Duration) -> Result<Vec<Complex32>> {
-        let a = dur.as_secs();
-        let b = dur.subsec_millis();
-
+    pub fn receive_simple(&mut self, buffer: &mut [I]) -> Result<ReceiveMetadata> {
         self.send_command(&StreamCommand {
-            command_type: StreamCommandType::CountAndDone(100),
+            command_type: StreamCommandType::CountAndDone(buffer.len() as u64),
             time: crate::StreamTime::Now,
         })?;
-    }
 
-    pub fn start_receiving(&mut self, buffer: &mut [I]) -> Result<ReceiveMetadata, Error> {
+        self.receive(&mut [buffer], 0.1, false)
+    }
+    // /// Receives samples on a single channel with a timeout of 0.1 seconds and one_packet disabled
+    // pub fn receive_simple<const LEN: usize>(
+    //     &mut self,
+    //     buffer: &mut [I; LEN],
+    // ) -> Result<ReceiveMetadata> {
+    //     self.send_command(&StreamCommand {
+    //         command_type: StreamCommandType::CountAndDone(LEN as u64),
+    //         time: crate::StreamTime::Now,
+    //     })?;
+
+    //     self.receive(&mut [buffer], 0.1, false)
+    // }
+
+    pub fn start_receiving(&mut self, buffer: &mut [I]) -> Result<ReceiveMetadata> {
         let mut metadata = ReceiveMetadata::default();
         let mut samples_received = 0usize;
 
         Ok(metadata)
+    }
+
+    pub fn lock_onto_frequency(&mut self, timeout: std::time::Duration) -> Result<()> {
+        let mut locked = false;
+        let started_at = Instant::now();
+
+        while !locked {
+            std::thread::sleep(Duration::from_millis(100));
+        }
+
+        Ok(())
     }
 }
 
