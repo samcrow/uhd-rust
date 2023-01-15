@@ -6,6 +6,7 @@ use crate::{
     error::{check_status, Error, Result},
     stream::StreamCommand,
     usrp::Usrp,
+    utils::check_equal_buffer_lengths,
     ReceiveMetadata,
 };
 
@@ -132,25 +133,6 @@ impl<I> ReceiveStreamer<'_, I> {
     pub fn receive_simple(&mut self, buffer: &mut [I]) -> Result<ReceiveMetadata> {
         self.receive(&mut [buffer], 0.1, false)
     }
-}
-
-/// Checks that all provided buffers have the same length. Returns the length of the buffers,
-/// or 0 if there are no buffers. Panics if the buffer lengths are not equal.
-fn check_equal_buffer_lengths<I>(buffers: &mut [&mut [I]]) -> usize {
-    buffers
-        .iter()
-        .fold(None, |prev_size, buffer| {
-            match prev_size {
-                // Store the size of the first buffer
-                None => Some(buffer.len()),
-
-                Some(prev_size) => {
-                    assert_eq!(prev_size, buffer.len(), "Unequal buffer sizes");
-                    Some(prev_size)
-                }
-            }
-        })
-        .unwrap_or(0)
 }
 
 impl<I> Drop for ReceiveStreamer<'_, I> {

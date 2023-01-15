@@ -1,10 +1,13 @@
 use std::marker::PhantomData;
+use std::os::raw::c_void;
 use std::ptr;
 
-use super::metadata::TransmitMetadata;
-use crate::error::{check_status, Error};
-use crate::usrp::Usrp;
-use std::os::raw::c_void;
+use crate::{
+    error::{check_status, Error},
+    usrp::Usrp,
+    utils::check_equal_buffer_lengths,
+    TransmitMetadata,
+};
 
 /// A streamer used to transmit samples from a USRP
 ///
@@ -118,26 +121,6 @@ impl<I> TransmitStreamer<'_, I> {
     pub fn transmit_simple(&mut self, buffer: &mut [I]) -> Result<TransmitMetadata, Error> {
         self.transmit(&mut [buffer], 0.1)
     }
-}
-
-/// Checks that all provided buffers have the same length. Returns the length of the buffers,
-/// or 0 if there are no buffers. Panics if the buffer lengths are not equal.
-fn check_equal_buffer_lengths<I>(buffers: &mut [&[I]]) -> usize {
-    buffers
-        .iter()
-        .fold(None, |prev_size, buffer| {
-            match prev_size {
-                None => {
-                    // Store the size of the first buffer
-                    Some(buffer.len())
-                }
-                Some(prev_size) => {
-                    assert_eq!(prev_size, buffer.len(), "Unequal buffer sizes");
-                    Some(prev_size)
-                }
-            }
-        })
-        .unwrap_or(0)
 }
 
 impl<I> Drop for TransmitStreamer<'_, I> {
