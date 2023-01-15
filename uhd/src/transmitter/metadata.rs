@@ -1,7 +1,7 @@
 use std::ptr;
 
 use crate::error::check_status;
-use crate::utils::copy_string;
+
 use crate::TimeSpec;
 
 /// Data about a receive operation

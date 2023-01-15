@@ -2,8 +2,6 @@ use std::marker::PhantomData;
 use std::os::raw::c_void;
 use std::ptr;
 
-use num_complex::Complex32;
-
 use crate::{
     error::{check_status, Error, Result},
     stream::StreamCommand,
