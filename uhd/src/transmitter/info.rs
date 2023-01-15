@@ -1,7 +1,7 @@
 use std::ffi::CStr;
 use std::str::Utf8Error;
 
-/// Information about a receive channel
+/// Information about a transmit channel
 #[derive(Debug, Clone)]
 pub struct TransmitInfo {
     motherboard_id: String,
