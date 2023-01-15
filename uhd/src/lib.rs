@@ -35,6 +35,7 @@ pub use error::*;
 pub use motherboard_eeprom::MotherboardEeprom;
 pub use receiver::{info::ReceiveInfo, metadata::*, streamer::ReceiveStreamer};
 pub use stream::*;
+pub use transmitter::{info::TransmitInfo, metadata::*, streamer::TransmitStreamer};
 pub use tune_request::*;
 pub use tune_result::TuneResult;
 pub use usrp::Usrp;
