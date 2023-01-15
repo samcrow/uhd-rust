@@ -1,6 +1,6 @@
-use std::{env::set_var, time::Duration};
+use std::env::set_var;
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result};
 use num_complex::Complex32;
 use tap::Pipe;
 use uhd::{self, StreamCommand, StreamCommandType, StreamTime, TuneRequest, Usrp};
@@ -30,13 +30,16 @@ pub fn main() -> Result<()> {
         .get_rx_stream(&uhd::StreamArgs::<Complex32>::new("fc32"))
         .unwrap();
 
-    let mut single_chan = uhd::alloc_boxed_slice::<Complex32, NUM_SAMPLES>();
+    let mut buffer = uhd::alloc_boxed_slice::<Complex32, NUM_SAMPLES>();
 
-    let stat = receiver.lock_onto_frequency(Duration::from_secs(5))?;
-    let stat = receiver.receive_simple(single_chan.as_mut())?;
+    receiver.send_command(&StreamCommand {
+        command_type: StreamCommandType::CountAndDone(buffer.len() as u64),
+        time: StreamTime::Now,
+    })?;
+    let status = receiver.receive_simple(buffer.as_mut())?;
 
-    dbg!(stat);
-    dbg!(single_chan);
+    log::info!("{:?}", status);
+    log::info!("{:?}", &buffer[..16]);
 
     Ok(())
 }
