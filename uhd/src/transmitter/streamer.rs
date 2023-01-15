@@ -3,7 +3,6 @@ use std::ptr;
 
 use super::metadata::TransmitMetadata;
 use crate::error::{check_status, Error};
-use crate::stream::StreamCommand;
 use crate::usrp::Usrp;
 use std::os::raw::c_void;
 
@@ -15,12 +14,12 @@ pub struct TransmitStreamer<'usrp, I> {
     /// Streamer handle
     handle: uhd_sys::uhd_tx_streamer_handle,
 
-    /// A vector of pointers to buffers (used in transmit() to convert `&mut [&mut [I]]` to `*mut *mut I`
+    /// A vector of pointers to buffers (used in transmit() to convert `&mut [&[I]]` to `*mut *const I`
     /// without reallocating memory each time
     ///
     /// Invariant: If this is not empty, its length is equal to the value returned by
     /// self.num_channels().
-    buffer_pointers: Vec<*mut c_void>,
+    buffer_pointers: Vec<*const c_void>,
     /// Link to the USRP that this streamer is associated with
     usrp: PhantomData<&'usrp Usrp>,
     /// Item type phantom data
@@ -49,15 +48,6 @@ impl<I> TransmitStreamer<'_, I> {
         self.handle
     }
 
-    /// Sends a stream command to the USRP
-    ///
-    /// This can be used to start or stop streaming
-    pub fn send_command(&self, command: &StreamCommand) -> Result<(), Error> {
-        todo!()
-        // let command_c = command.as_c_command();
-        // check_status(unsafe { uhd_sys::uhd_tx_streamer_issue_stream_cmd(self.handle, &command_c) })
-    }
-
     /// Returns the number of channels that this streamer is associated with
     pub fn num_channels(&self) -> usize {
         let mut num_channels = 0usize;
@@ -73,25 +63,21 @@ impl<I> TransmitStreamer<'_, I> {
 
     /// transmits samples from the USRP
     ///
-    /// buffers: One or more buffers (one per channel) where the samples will be written. All
-    /// buffers should have the same length. This function will panic if the number of buffers is
-    /// not equal to self.num_channels(), or if not all buffers have the same length.
+    /// buffers: One or more buffers (one per channel) containing sample to transmit. All
+    /// buffers should have the same length. This function will panic if the number of buffers
+    /// is not equal to self.num_channels(), or if not all buffers have the same length.
     ///
     /// timeout: The timeout for the transmit operation, in seconds
-    ///
-    /// one_packet: If this is true, one call to transmit() will not copy samples from more than
-    /// one packet of the underlying protocol
     ///
     /// On success, this function returns a transmitMetadata object with information about
     /// the number of samples actually transmitd.
     pub fn transmit(
         &mut self,
-        buffers: &mut [&mut [I]],
+        buffers: &mut [&[I]],
         timeout: f64,
-        one_packet: bool,
     ) -> Result<TransmitMetadata, Error> {
         let mut metadata = TransmitMetadata::default();
-        let mut samples_transmitd = 0usize;
+        let mut samples_transmitted = 0usize;
 
         // Initialize buffer_pointers
         if self.buffer_pointers.is_empty() {
@@ -109,34 +95,34 @@ impl<I> TransmitStreamer<'_, I> {
 
         // Copy buffer pointers into C-compatible form
         for (entry, buffer) in self.buffer_pointers.iter_mut().zip(buffers.iter_mut()) {
-            *entry = buffer.as_mut_ptr() as *mut c_void;
+            *entry = buffer.as_ptr() as *mut c_void;
         }
 
-        // check_status(unsafe {
-        //     uhd_sys::uhd_tx_streamer_send(
-        //         self.handle,
-        //         self.buffer_pointers.as_mut_ptr(),
-        //         buffer_length as _,
-        //         metadata.handle_mut(),
-        //         timeout,
-        //         one_packet,
-        //         &mut samples_transmitd as *mut usize as *mut _,
-        //     )
-        // })?;
-        // metadata.set_samples(samples_transmitd);
+        check_status(unsafe {
+            uhd_sys::uhd_tx_streamer_send(
+                self.handle,
+                self.buffer_pointers.as_mut_ptr(),
+                buffer_length as _,
+                metadata.handle_mut(),
+                timeout,
+                &mut samples_transmitted as *mut usize as *mut _,
+            )
+        })?;
+        metadata.set_samples(samples_transmitted);
 
         Ok(metadata)
     }
 
-    /// transmits samples on a single channel with a timeout of 0.1 seconds and one_packet disabled
+    /// transmits samples on a single channel with a timeout of 0.1 seconds and
+    /// one_packet disabled
     pub fn transmit_simple(&mut self, buffer: &mut [I]) -> Result<TransmitMetadata, Error> {
-        self.transmit(&mut [buffer], 0.1, false)
+        self.transmit(&mut [buffer], 0.1)
     }
 }
 
 /// Checks that all provided buffers have the same length. Returns the length of the buffers,
 /// or 0 if there are no buffers. Panics if the buffer lengths are not equal.
-fn check_equal_buffer_lengths<I>(buffers: &mut [&mut [I]]) -> usize {
+fn check_equal_buffer_lengths<I>(buffers: &mut [&[I]]) -> usize {
     buffers
         .iter()
         .fold(None, |prev_size, buffer| {
