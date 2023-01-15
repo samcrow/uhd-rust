@@ -64,39 +64,6 @@ impl TransmitMetadata {
         value
     }
 
-    // /// Returns true if the provided transmit buffer was not large enough to hold a full packet
-    // ///
-    // /// If this is the case, the fragment_offset() function returns the offset from the beginning
-    // /// of the packet to the first sample transmitted
-    // pub fn more_fragments(&self) -> bool {
-    //     let mut value = false;
-    //     check_status(unsafe { uhd_sys::uhd_tx_metadata_more_fragments(self.handle, &mut value) })
-    //         .unwrap();
-    //     value
-    // }
-
-    // /// If more_fragments() returned true, this function returns the offset from the beginning
-    // /// of the packet to the first sample transmitted
-    // pub fn fragment_offset(&self) -> usize {
-    //     let mut value = 0usize;
-    //     check_status(unsafe {
-    //         uhd_sys::uhd_tx_metadata_fragment_offset(
-    //             self.handle,
-    //             &mut value as *mut usize as *mut _,
-    //         )
-    //     })
-    //     .unwrap();
-    //     value
-    // }
-
-    // /// Returns true if a packet was dropped or transmitted out of order
-    // pub fn out_of_sequence(&self) -> bool {
-    //     let mut value = false;
-    //     check_status(unsafe { uhd_sys::uhd_tx_metadata_out_of_sequence(self.handle, &mut value) })
-    //         .unwrap();
-    //     value
-    // }
-
     /// Returns the number of samples transmitted
     pub fn samples(&self) -> usize {
         self.samples
@@ -106,45 +73,6 @@ impl TransmitMetadata {
     pub(crate) fn set_samples(&mut self, samples: usize) {
         self.samples = samples
     }
-
-    // /// Returns the error code associated with the transmit operation
-    // fn error_code(&self) -> uhd_sys::uhd_tx_metadata_error_code_t::Type {
-    //     let mut code = uhd_sys::uhd_tx_metadata_error_code_t::UHD_tx_METADATA_ERROR_CODE_NONE;
-    //     check_status(unsafe { uhd_sys::uhd_tx_metadata_error_code(self.handle, &mut code) })
-    //         .unwrap();
-    //     code
-    // }
-
-    // /// Returns the error associated with the transmit operation, if any
-    // pub fn last_error(&self) -> Option<TransmitError> {
-    //     let out_of_sequence = self.out_of_sequence();
-    //     use uhd_sys::uhd_tx_metadata_error_code_t::*;
-    //     let kind = match self.error_code() {
-    //         UHD_tx_METADATA_ERROR_CODE_TIMEOUT => TransmitErrorKind::Timeout,
-    //         UHD_tx_METADATA_ERROR_CODE_LATE_COMMAND => TransmitErrorKind::LateCommand,
-    //         UHD_tx_METADATA_ERROR_CODE_BROKEN_CHAIN => TransmitErrorKind::BrokenChain,
-    //         UHD_tx_METADATA_ERROR_CODE_OVERFLOW if !out_of_sequence => TransmitErrorKind::Overflow,
-    //         UHD_tx_METADATA_ERROR_CODE_OVERFLOW if out_of_sequence => {
-    //             TransmitErrorKind::OutOfSequence
-    //         }
-    //         UHD_tx_METADATA_ERROR_CODE_ALIGNMENT => TransmitErrorKind::Alignment,
-    //         UHD_tx_METADATA_ERROR_CODE_BAD_PACKET => TransmitErrorKind::BadPacket,
-    //         UHD_tx_METADATA_ERROR_CODE_NONE => {
-    //             // Not actually an error
-    //             return None;
-    //         }
-    //         _ => {
-    //             // Some other error
-    //             TransmitErrorKind::Other
-    //         }
-    //     };
-    //     let message = copy_string(|buffer, length| unsafe {
-    //         uhd_sys::uhd_tx_metadata_strerror(self.handle, buffer, length as _)
-    //     })
-    //     .ok();
-
-    //     Some(TransmitError { kind, message })
-    // }
 
     pub(crate) fn handle_mut(&mut self) -> &mut uhd_sys::uhd_tx_metadata_handle {
         &mut self.handle
@@ -188,73 +116,19 @@ impl Drop for TransmitMetadata {
 }
 
 mod fmt {
-    use super::*;
-    use super::{TransmitError, TransmitMetadata};
-    use std::fmt::{Debug, Display, Formatter, Result};
+    use super::TransmitMetadata;
+    use std::fmt::{Debug, Formatter, Result};
 
     impl Debug for TransmitMetadata {
         fn fmt(&self, f: &mut Formatter<'_>) -> Result {
             f.debug_struct("TransmitMetadata")
                 .field("time_spec", &self.time_spec())
-                // .field("more_fragments", &self.more_fragments())
-                // .field("fragment_offset", &self.fragment_offset())
                 .field("start_of_burst", &self.start_of_burst())
                 .field("end_of_burst", &self.end_of_burst())
+                .field("received_samples", &self.samples())
                 .finish()
         }
     }
-
-    impl Display for TransmitError {
-        fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-            match self.kind {
-                TransmitErrorKind::Timeout => write!(f, "No packet transmitted"),
-                TransmitErrorKind::LateCommand => write!(f, "Command timestamp was in the past"),
-                TransmitErrorKind::BrokenChain => write!(f, "Expected another stream command"),
-                TransmitErrorKind::Overflow => {
-                    write!(f, "An internal transmit buffer has been filled")
-                }
-                TransmitErrorKind::OutOfSequence => write!(f, "Sequence error"),
-                TransmitErrorKind::Alignment => write!(f, "Multi-channel alignment failed"),
-                TransmitErrorKind::BadPacket => write!(f, "A packet could not be parsed"),
-                TransmitErrorKind::Other => write!(f, "Other error"),
-            }?;
-            match self.message {
-                Some(ref message) if !message.is_empty() => write!(f, ": {}", message)?,
-                _ => {}
-            }
-            Ok(())
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct TransmitError {
-    kind: TransmitErrorKind,
-    message: Option<String>,
-}
-
-impl TransmitError {
-    pub fn kind(&self) -> TransmitErrorKind {
-        self.kind.clone()
-    }
-    pub fn message(&self) -> Option<&str> {
-        self.message.as_deref()
-    }
-}
-
-impl std::error::Error for TransmitError {}
-
-#[non_exhaustive]
-#[derive(Debug, Clone)]
-pub enum TransmitErrorKind {
-    Timeout,
-    LateCommand,
-    BrokenChain,
-    Overflow,
-    OutOfSequence,
-    Alignment,
-    BadPacket,
-    Other,
 }
 
 #[cfg(test)]
@@ -267,9 +141,5 @@ mod test {
         assert_eq!(None, metadata.time_spec());
         assert_eq!(false, metadata.start_of_burst());
         assert_eq!(false, metadata.end_of_burst());
-        // assert_eq!(false, metadata.out_of_sequence());
-        // assert_eq!(false, metadata.more_fragments());
-        // assert_eq!(0, metadata.fragment_offset());
-        // assert!(metadata.last_error().is_none());
     }
 }
