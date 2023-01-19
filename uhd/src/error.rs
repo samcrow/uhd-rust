@@ -85,11 +85,8 @@ pub enum Error {
 }
 
 /// Returns a string copied using uhd_get_last_error()
-fn last_error_message() -> Option<String> {
+pub fn last_error_message() -> Option<String> {
     copy_string(|buffer, length| unsafe { uhd_sys::uhd_get_last_error(buffer, length as _) }).ok()
-}
-pub trait FromUhdStatus {
-    fn into_result(self) -> Result<()>;
 }
 
 /// Converts a status code into a result

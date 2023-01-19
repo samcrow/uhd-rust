@@ -2,7 +2,8 @@
 
 * Added support for transmitting with TransmitStreamer
 * Remove kind() and message() methods on Error. Error is now implemented with the ThisError
-  crate internally
+  crate internally. Error message strings from UHD can instead be retrieved using
+  `uhd::last_error_message()`.
 * Bump num-complex crate to v0.4
 * The following methods on `Ursp` now require a mutable reference:
   `clear_command_time`
