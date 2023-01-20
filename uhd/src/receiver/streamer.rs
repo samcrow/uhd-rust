@@ -1,11 +1,14 @@
 use std::marker::PhantomData;
+use std::os::raw::c_void;
 use std::ptr;
 
-use crate::error::{check_status, Error};
-use crate::receive_metadata::ReceiveMetadata;
-use crate::stream::StreamCommand;
-use crate::usrp::Usrp;
-use std::os::raw::c_void;
+use crate::{
+    error::{check_status, Error, Result},
+    stream::StreamCommand,
+    usrp::Usrp,
+    utils::check_equal_buffer_lengths,
+    ReceiveMetadata,
+};
 
 /// A streamer used to receive samples from a USRP
 ///
@@ -51,7 +54,7 @@ impl<I> ReceiveStreamer<'_, I> {
     /// Sends a stream command to the USRP
     ///
     /// This can be used to start or stop streaming
-    pub fn send_command(&self, command: &StreamCommand) -> Result<(), Error> {
+    pub fn send_command(&mut self, command: &StreamCommand) -> Result<(), Error> {
         let command_c = command.as_c_command();
         check_status(unsafe { uhd_sys::uhd_rx_streamer_issue_stream_cmd(self.handle, &command_c) })
     }
@@ -127,29 +130,9 @@ impl<I> ReceiveStreamer<'_, I> {
     }
 
     /// Receives samples on a single channel with a timeout of 0.1 seconds and one_packet disabled
-    pub fn receive_simple(&mut self, buffer: &mut [I]) -> Result<ReceiveMetadata, Error> {
+    pub fn receive_simple(&mut self, buffer: &mut [I]) -> Result<ReceiveMetadata> {
         self.receive(&mut [buffer], 0.1, false)
     }
-}
-
-/// Checks that all provided buffers have the same length. Returns the length of the buffers,
-/// or 0 if there are no buffers. Panics if the buffer lengths are not equal.
-fn check_equal_buffer_lengths<I>(buffers: &mut [&mut [I]]) -> usize {
-    buffers
-        .iter()
-        .fold(None, |prev_size, buffer| {
-            match prev_size {
-                None => {
-                    // Store the size of the first buffer
-                    Some(buffer.len())
-                }
-                Some(prev_size) => {
-                    assert_eq!(prev_size, buffer.len(), "Unequal buffer sizes");
-                    Some(prev_size)
-                }
-            }
-        })
-        .unwrap_or(0)
 }
 
 impl<I> Drop for ReceiveStreamer<'_, I> {

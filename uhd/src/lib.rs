@@ -20,28 +20,26 @@ mod daughter_board_eeprom;
 mod error;
 mod motherboard_eeprom;
 pub mod range;
-mod receive_info;
-mod receive_metadata;
-mod receive_streamer;
+mod receiver;
 mod stream;
 mod string_vector;
+mod transmitter;
 mod tune_request;
 mod tune_result;
 mod usrp;
 mod utils;
 
 // Re-export many public items at the root
-pub use crate::daughter_board_eeprom::DaughterBoardEeprom;
-pub use crate::error::*;
-pub use crate::motherboard_eeprom::MotherboardEeprom;
-pub use crate::receive_info::ReceiveInfo;
-pub use crate::receive_metadata::*;
-pub use crate::receive_streamer::ReceiveStreamer;
-pub use crate::stream::*;
-pub use crate::tune_request::*;
-pub use crate::tune_result::TuneResult;
-pub use crate::usrp::Usrp;
-
+pub use daughter_board_eeprom::DaughterBoardEeprom;
+pub use error::*;
+pub use motherboard_eeprom::MotherboardEeprom;
+pub use receiver::{info::ReceiveInfo, metadata::*, streamer::ReceiveStreamer};
+pub use stream::*;
+pub use transmitter::{info::TransmitInfo, metadata::*, streamer::TransmitStreamer};
+pub use tune_request::*;
+pub use tune_result::TuneResult;
+pub use usrp::Usrp;
+pub use utils::alloc_boxed_slice;
 // Common definitions
 
 /// A time value, represented as an integer number of seconds and a floating-point fraction of

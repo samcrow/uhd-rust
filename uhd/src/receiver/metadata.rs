@@ -1,5 +1,6 @@
 use std::ptr;
 
+use super::error::{ReceiveError, ReceiveErrorKind};
 use crate::error::check_status;
 use crate::utils::copy_string;
 use crate::TimeSpec;
@@ -170,8 +171,8 @@ impl Drop for ReceiveMetadata {
 }
 
 mod fmt {
+    use super::*;
     use super::{ReceiveError, ReceiveMetadata};
-    use crate::ReceiveErrorKind;
     use std::fmt::{Debug, Display, Formatter, Result};
 
     impl Debug for ReceiveMetadata {
@@ -182,6 +183,7 @@ mod fmt {
                 .field("fragment_offset", &self.fragment_offset())
                 .field("start_of_burst", &self.start_of_burst())
                 .field("end_of_burst", &self.end_of_burst())
+                .field("received_samples", &self.samples())
                 .finish()
         }
     }
@@ -207,36 +209,6 @@ mod fmt {
             Ok(())
         }
     }
-}
-
-#[derive(Debug)]
-pub struct ReceiveError {
-    kind: ReceiveErrorKind,
-    message: Option<String>,
-}
-
-impl ReceiveError {
-    pub fn kind(&self) -> ReceiveErrorKind {
-        self.kind.clone()
-    }
-    pub fn message(&self) -> Option<&str> {
-        self.message.as_deref()
-    }
-}
-
-impl std::error::Error for ReceiveError {}
-
-#[non_exhaustive]
-#[derive(Debug, Clone)]
-pub enum ReceiveErrorKind {
-    Timeout,
-    LateCommand,
-    BrokenChain,
-    Overflow,
-    OutOfSequence,
-    Alignment,
-    BadPacket,
-    Other,
 }
 
 #[cfg(test)]

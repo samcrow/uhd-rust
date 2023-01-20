@@ -1,4 +1,4 @@
-use crate::error::{check_status, Error, ErrorKind};
+use crate::error::{check_status, Error};
 use crate::utils::copy_string;
 use std::ffi::CString;
 use std::ptr;
@@ -15,8 +15,8 @@ impl MotherboardEeprom {
         // An error with kind Key indicates that the value was not found
         match status {
             Ok(value) => Ok(Some(value)),
-            Err(e) => match e.kind() {
-                ErrorKind::Key => Ok(None),
+            Err(e) => match e {
+                Error::Key => Ok(None),
                 _ => Err(e),
             },
         }
@@ -56,6 +56,7 @@ mod test {
     #[test]
     fn empty_eeprom() {
         let eeprom = MotherboardEeprom::default();
-        assert_eq!(Ok(None), eeprom.get("jabberwock".into()));
+        let res = eeprom.get("jabberwock".into());
+        assert!(res.is_ok() && res.unwrap().is_none())
     }
 }

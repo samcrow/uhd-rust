@@ -1,4 +1,3 @@
-use crate::TimeSpec;
 use num_complex::{Complex, Complex32, Complex64};
 use std::convert::{TryFrom, TryInto};
 use std::ffi::{CString, NulError};
@@ -149,9 +148,16 @@ pub struct StreamCommand {
 
 #[derive(Debug, Clone)]
 pub enum StreamCommandType {
+    /// UHD_STREAM_MODE_START_CONTINUOUS
     StartContinuous,
+
+    /// UHD_STREAM_MODE_STOP_CONTINUOUS
     StopContinuous,
+
+    /// UHD_STREAM_MODE_NUM_SAMPS_AND_DONE
     CountAndDone(u64),
+
+    /// UHD_STREAM_MODE_NUM_SAMPS_AND_MORE
     CountAndMore(u64),
 }
 
@@ -159,7 +165,7 @@ pub enum StreamCommandType {
 #[derive(Debug, Clone)]
 pub enum StreamTime {
     Now,
-    Later(TimeSpec),
+    Later(std::time::Duration),
 }
 
 impl StreamCommand {
@@ -180,12 +186,9 @@ impl StreamCommand {
 
         match &self.time {
             StreamTime::Now => c_cmd.stream_now = true,
-            StreamTime::Later(timespec) => {
-                c_cmd.time_spec_full_secs = timespec
-                    .seconds
-                    .try_into()
-                    .expect("Timespec seconds too large to fit into a time_t");
-                c_cmd.time_spec_frac_secs = timespec.fraction;
+            StreamTime::Later(dur) => {
+                c_cmd.time_spec_full_secs = dur.as_secs() as i64;
+                c_cmd.time_spec_frac_secs = dur.subsec_millis() as f64 / 1000.0
             }
         }
 

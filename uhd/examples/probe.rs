@@ -74,6 +74,7 @@ fn probe_one_usrp(address: &str) -> Result<(), Box<dyn Error>> {
     }
 
     for channel in 0..usrp.get_num_tx_channels()? {
+        println!("====");
         println!("Transmit channel {}:", channel);
         if let Ok(antennas) = usrp.get_tx_antennas(channel) {
             println!("TX antennas {:?}", antennas);
@@ -84,8 +85,22 @@ fn probe_one_usrp(address: &str) -> Result<(), Box<dyn Error>> {
         if let Ok(gain) = usrp.get_normalized_tx_gain(channel) {
             println!("Normalized TX gain {}", gain);
         }
+        if let Ok(names) = usrp.get_tx_gain_names(channel) {
+            for name in names {
+                let range = usrp.get_tx_gain_range(channel, &name)?;
+                let current = usrp.get_tx_gain(channel, &name)?;
+                println!(
+                    "Gain element {}: range {:?}, current {}",
+                    name, range, current
+                );
+            }
+        }
+        println!("Local oscillators: {:?}", usrp.get_tx_lo_names(channel)?);
+        println!("====");
     }
+
     for channel in 0..usrp.get_num_rx_channels()? {
+        println!("====");
         println!("Receive channel {}:", channel);
         if let Ok(antennas) = usrp.get_rx_antennas(channel) {
             println!("RX antennas {:?}", antennas);
@@ -107,6 +122,7 @@ fn probe_one_usrp(address: &str) -> Result<(), Box<dyn Error>> {
             }
         }
         println!("Local oscillators: {:?}", usrp.get_rx_lo_names(channel)?);
+        println!("====");
     }
 
     Ok(())

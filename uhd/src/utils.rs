@@ -1,6 +1,6 @@
 use std::os::raw::c_char;
 
-use crate::error::{check_status, Error, ErrorKind};
+use crate::error::{check_status, Error};
 
 /// Initial number of bytes to allocate when copying a string out of a string vector
 const INITIAL_SIZE: usize = 128;
@@ -36,7 +36,7 @@ where
             buffer.truncate(null_index);
             buffer.shrink_to_fit();
             // Try to convert to UTF-8
-            return String::from_utf8(buffer).map_err(|_| Error::new(ErrorKind::Utf8));
+            return String::from_utf8(buffer).map_err(|_| Error::Utf8);
         } else {
             // If there is no null, the error message was longer than BUFFER_LENGTH.
             // Try again with the next size.
@@ -44,7 +44,30 @@ where
         }
     }
     // String is too large to fully copy
-    Err(Error::new(ErrorKind::StringLength))
+    Err(Error::StringLength)
+}
+
+/// Checks that all provided buffers have the same length. Returns the length of the buffers,
+/// or 0 if there are no buffers. Panics if the buffer lengths are not equal.
+pub(crate) fn check_equal_buffer_lengths<I, T>(buffers: &mut [T]) -> usize
+where
+    T: core::borrow::Borrow<[I]>,
+{
+    buffers
+        .iter()
+        .fold(None, |prev_size, buffer| {
+            let buffer: &[I] = buffer.borrow();
+            match prev_size {
+                // Store the size of the first buffer
+                None => Some(buffer.len()),
+
+                Some(prev_size) => {
+                    assert_eq!(prev_size, buffer.len(), "Unequal buffer sizes");
+                    Some(prev_size)
+                }
+            }
+        })
+        .unwrap_or(0)
 }
 
 /// An iterator over buffer sizes that yields INITIAL_SIZE and then double the previous value
@@ -71,6 +94,14 @@ impl Iterator for BufferSizes {
             self.next *= 2;
             Some(current)
         }
+    }
+}
+
+pub fn alloc_boxed_slice<T: Default + Clone, const LEN: usize>() -> Box<[T; LEN]> {
+    use std::convert::TryInto;
+    match vec![T::default(); LEN].into_boxed_slice().try_into() {
+        Ok(a) => a,
+        Err(_) => unreachable!(),
     }
 }
 
