@@ -16,6 +16,7 @@
   `set_rx_gain`
   `set_rx_sample_rate`
   `set_tx_antenna`
+* Use `sc16` over-the-wire format in transmit and receive examples
 
 # 0.1.1 - 2021-03-30
 
