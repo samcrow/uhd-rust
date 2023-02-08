@@ -2,7 +2,7 @@ use core::f32::consts;
 use std::env::set_var;
 
 use anyhow::{Context, Result};
-use num_complex::Complex32;
+use num_complex::{Complex, Complex32};
 use tap::Pipe;
 use uhd::{self, TuneRequest, Usrp};
 
@@ -34,16 +34,16 @@ pub fn main() -> Result<()> {
 
     // Get TransmitStreamer
     let mut transmitter = usrp
-        .get_tx_stream(&uhd::StreamArgs::<Complex32>::new("fc32"))
+        .get_tx_stream(&uhd::StreamArgs::<Complex<i16>>::new("sc16"))
         .unwrap();
 
     // Generate a sine wave at Fs/4
-    let mut single_chan = uhd::alloc_boxed_slice::<Complex32, NUM_SAMPLES>();
+    let mut single_chan = uhd::alloc_boxed_slice::<Complex<i16>, NUM_SAMPLES>();
     for i in 0..NUM_SAMPLES {
         let t = i as f32 / 4.;
         // z = e^j*2π*theta
         let z = (Complex32::i() * 2. * consts::PI * t).expf(consts::E);
-        single_chan[i] = 0.7 * z;
+        single_chan[i] = Complex::new((8192. * z.re) as i16, (8192. * z.im) as i16);
     }
 
     // Transmit

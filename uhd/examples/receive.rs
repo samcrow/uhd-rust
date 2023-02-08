@@ -1,7 +1,7 @@
 use std::env::set_var;
 
 use anyhow::{Context, Result};
-use num_complex::Complex32;
+use num_complex::Complex;
 use tap::Pipe;
 use uhd::{self, StreamCommand, StreamCommandType, StreamTime, TuneRequest, Usrp};
 
@@ -27,10 +27,10 @@ pub fn main() -> Result<()> {
     usrp.set_rx_frequency(&TuneRequest::with_frequency(2.4e9), CHANNEL)?;
 
     let mut receiver = usrp
-        .get_rx_stream(&uhd::StreamArgs::<Complex32>::new("fc32"))
+        .get_rx_stream(&uhd::StreamArgs::<Complex<i16>>::new("sc16"))
         .unwrap();
 
-    let mut buffer = uhd::alloc_boxed_slice::<Complex32, NUM_SAMPLES>();
+    let mut buffer = uhd::alloc_boxed_slice::<Complex<i16>, NUM_SAMPLES>();
 
     receiver.send_command(&StreamCommand {
         command_type: StreamCommandType::CountAndDone(buffer.len() as u64),
