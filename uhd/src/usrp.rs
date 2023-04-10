@@ -40,17 +40,6 @@ impl Usrp {
         Ok(Usrp(handle))
     }
 
-    /// Returns a list of registers on this USRP that can be read and written
-    ///
-    /// mboard: The board number (normally 0 if only one USRP is in use)
-    pub fn enumerate_registers(&self, mboard: usize) -> Result<Vec<String>, Error> {
-        let mut vector = StringVector::new()?;
-        check_status(unsafe {
-            uhd_sys::uhd_usrp_enumerate_registers(self.0, mboard as _, vector.handle_mut())
-        })?;
-        Ok(vector.into())
-    }
-
     /// Returns the antennas available for transmission
     pub fn get_tx_antennas(&self, channel: usize) -> Result<Vec<String>, Error> {
         let mut vector = StringVector::new()?;
