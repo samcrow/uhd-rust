@@ -1,4 +1,5 @@
 # Unreleased
+* Remove `enumerate_registers` from `Usrp` since the low level register apis have been removed from libuhd 4.0 .
 
 # [0.2.0](https://github.com/samcrow/canadensis/tree/v0.2.0) - 2023-02-09
 
