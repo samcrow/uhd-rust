@@ -1,5 +1,15 @@
 # Unreleased
+
+# [0.3.0](https://github.com/samcrow/canadensis/tree/uhd-v0.3.0) - 2024-05-17
+
+## Changed
+
 * Remove `enumerate_registers` from `Usrp` since the low level register apis have been removed from libuhd 4.0 .
+* Update `env-logger` dev-dependency to 0.11
+
+## Added
+
+* Add `Usrp::set_clock_source` [#10](https://github.com/samcrow/uhd-rust/pull/10)
 
 # [0.2.0](https://github.com/samcrow/canadensis/tree/v0.2.0) - 2023-02-09
 
