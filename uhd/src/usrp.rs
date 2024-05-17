@@ -610,6 +610,12 @@ impl Usrp {
         Ok(time)
     }
 
+    /// Returns the current clock source
+    pub fn set_clock_source(&self, source: &str, mboard: usize) -> Result<(), Error> {
+        let source = CString::new(source)?;
+        check_status(unsafe { uhd_sys::uhd_usrp_set_clock_source(self.0, source.as_ptr(), mboard as _) })
+    }
+    
     /// Enables or disables the receive automatic gain control
     pub fn set_rx_agc_enabled(&mut self, enabled: bool, channel: usize) -> Result<(), Error> {
         check_status(unsafe { uhd_sys::uhd_usrp_set_rx_agc(self.0, enabled, channel as _) })
