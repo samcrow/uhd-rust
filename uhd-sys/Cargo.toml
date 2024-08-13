@@ -11,6 +11,11 @@ categories = ["external-ffi-bindings", "hardware-support"]
 links = "uhd"
 build = "build.rs"
 
+[lib]
+# output of UHD C++ documentation from bindgen sometimes has 4 spaces, which rustdoc 
+# interprets as markdown-style code, which then triggers failures during doctest
+doctest = false
+
 [dependencies]
 
 [build-dependencies]
