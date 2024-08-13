@@ -13,9 +13,9 @@ fn main() {
         .get("uhd")
         .expect("uhd library not in map")
         .include_paths
-        .get(0)
+        .first()
         .expect("no include path for UHD headers");
-    generate_bindings(&uhd_include_path);
+    generate_bindings(uhd_include_path);
 }
 
 fn generate_bindings(include_path: &Path) {
@@ -27,18 +27,20 @@ fn generate_bindings(include_path: &Path) {
     let mut builder = bindgen::builder()
         .whitelist_function("^uhd.+")
         .default_enum_style(bindgen::EnumVariation::ModuleConsts)
-        .header(usrp_header.to_string_lossy().to_owned())
+        .header(usrp_header.to_string_lossy().clone())
         // Add the include directory to ensure that #includes in the header work correctly
-        .clang_arg(format!("-I{}", include_path.to_string_lossy().to_owned()));
+        .clang_arg(format!("-I{}", include_path.to_string_lossy().clone()));
 
     // On Raspberry Pi devices, the include directories require some adjustment.
     let target = env::var("TARGET").expect("No TARGET environment variable");
     if target == "armv7-unknown-linux-gnueabihf" {
         builder = builder.clang_arg("-I/usr/lib/gcc/arm-linux-gnueabihf/8/include");
+    } else if target == "aarch64-apple-darwin" {
+        // On macOS Apple Silicon, boost libs from `brew install boost` are at this path
+        println!("cargo:rustc-link-search=/opt/homebrew/lib/");
     }
 
-    let bindings = builder.generate()
-        .expect("Failed to generate bindings");
+    let bindings = builder.generate().expect("Failed to generate bindings");
     bindings
         .write_to_file(out_path)
         .expect("Failed to write bindings to file");
