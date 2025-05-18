@@ -1,5 +1,9 @@
 # Unreleased
 
+## Added
+
+* Time-related methods [#14](https://github.com/samcrow/uhd-rust/pull/14)
+
 # [0.3.0](https://github.com/samcrow/uhd-rust/tree/uhd-v0.3.0) - 2024-05-17
 
 ## Changed
