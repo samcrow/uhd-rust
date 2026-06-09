@@ -61,6 +61,11 @@ impl MetaRange {
         length
     }
 
+    /// Checks if meta-range is empty
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     /// Returns the range at the provided index, if one exists
     pub fn get(&self, index: usize) -> Option<Range> {
         let mut range = Range::default();

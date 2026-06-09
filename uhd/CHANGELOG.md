@@ -1,7 +1,12 @@
-# Unreleased
+# [0.4.0](https://github.com/samcrow/uhd-rust/tree/uhd-v0.4.0) - 2026-06-09
+
+## Changed
+
+* Exposed `ReceiveError` to allow receiver logic to handle/match on `ReceiveErrorKind`
 
 ## Added
 
+* Added `TransmitMetadata` builder along with new transmit `send()` method to allow bursty and timed transmissions [#13](https://github.com/samcrow/uhd-rust/issues/13)
 * Time-related methods [#14](https://github.com/samcrow/uhd-rust/pull/14)
 
 # [0.3.0](https://github.com/samcrow/uhd-rust/tree/uhd-v0.3.0) - 2024-05-17

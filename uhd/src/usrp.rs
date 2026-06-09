@@ -623,7 +623,7 @@ impl Usrp {
                 &mut time.fraction,
             )
         })?;
-        time.seconds = seconds_time_t.into();
+        time.seconds = seconds_time_t;
         Ok(time)
     }
 

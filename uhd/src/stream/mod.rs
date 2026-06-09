@@ -1,5 +1,5 @@
 use num_complex::{Complex, Complex32, Complex64};
-use std::convert::{TryFrom, TryInto};
+use std::convert::TryFrom;
 use std::ffi::{CString, NulError};
 use std::marker::PhantomData;
 
@@ -49,7 +49,7 @@ impl<I> Default for StreamArgs<I> {
     /// and default arguments and channels
     fn default() -> Self {
         StreamArgs {
-            host_format: PhantomData::default(),
+            host_format: PhantomData,
             wire_format: "sc16".to_string(),
             args: "".to_string(),
             // Empty list = just channel 0
@@ -204,15 +204,11 @@ impl StreamCommand {
             }
             StreamCommandType::CountAndDone(samples) => {
                 c_cmd.stream_mode = uhd_sys::uhd_stream_mode_t::UHD_STREAM_MODE_NUM_SAMPS_AND_DONE;
-                c_cmd.num_samps = samples
-                    .try_into()
-                    .expect("Number of samples too large for size_t");
+                c_cmd.num_samps = samples;
             }
             StreamCommandType::CountAndMore(samples) => {
                 c_cmd.stream_mode = uhd_sys::uhd_stream_mode_t::UHD_STREAM_MODE_NUM_SAMPS_AND_MORE;
-                c_cmd.num_samps = samples
-                    .try_into()
-                    .expect("Number of samples too large for size_t");
+                c_cmd.num_samps = samples;
             }
         };
         c_cmd

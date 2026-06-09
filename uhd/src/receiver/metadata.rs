@@ -33,8 +33,8 @@ impl ReceiveMetadata {
                 )
             })
             .unwrap();
-            // Convert seconds from time_t to i64
-            time.seconds = seconds_time_t.into();
+
+            time.seconds = seconds_time_t;
             Some(time)
         } else {
             None
@@ -219,10 +219,10 @@ mod test {
     fn default_rx_metadata() {
         let metadata = ReceiveMetadata::default();
         assert_eq!(None, metadata.time_spec());
-        assert_eq!(false, metadata.start_of_burst());
-        assert_eq!(false, metadata.end_of_burst());
-        assert_eq!(false, metadata.out_of_sequence());
-        assert_eq!(false, metadata.more_fragments());
+        assert!(!metadata.start_of_burst());
+        assert!(!metadata.end_of_burst());
+        assert!(!metadata.out_of_sequence());
+        assert!(!metadata.more_fragments());
         assert_eq!(0, metadata.fragment_offset());
         assert!(metadata.last_error().is_none());
     }

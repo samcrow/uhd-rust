@@ -112,7 +112,8 @@ pub(crate) fn check_status(status: uhd_sys::uhd_error::Type) -> Result<()> {
         uhd_error::UHD_ERROR_EXCEPT => Some(Except),
         uhd_error::UHD_ERROR_BOOSTEXCEPT => Some(BoostExcept),
         uhd_error::UHD_ERROR_STDEXCEPT => Some(StdExcept),
-        uhd_error::UHD_ERROR_UNKNOWN | _ => Some(Unknown),
+        uhd_error::UHD_ERROR_UNKNOWN => Some(Unknown),
+        _ => Some(Unknown),
     };
     match iserr {
         std::option::Option::Some(e) => Err(e),
