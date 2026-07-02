@@ -52,6 +52,7 @@ impl TransmitMetadata {
 
     /// Returns the timestamp of (the first?) of the transmitted samples, according to the USRP's
     /// internal clock
+    #[allow(clippy::useless_conversion)]
     pub fn time_spec(&self) -> Option<TimeSpec> {
         if self.has_time_spec() {
             let mut time = TimeSpec::default();
@@ -66,7 +67,9 @@ impl TransmitMetadata {
             })
             .unwrap();
 
-            time.seconds = seconds_time_t;
+            // Explicitly convert seconds from time_t to i64 (some platforms `time_t` is smaller
+            // than `i64`)
+            time.seconds = seconds_time_t.into();
             Some(time)
         } else {
             None

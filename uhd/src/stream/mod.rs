@@ -1,5 +1,5 @@
 use num_complex::{Complex, Complex32, Complex64};
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 use std::ffi::{CString, NulError};
 use std::marker::PhantomData;
 
@@ -195,6 +195,7 @@ impl StreamCommand {
         // In some versions of UHD, num_samps is a size_t. In other versions, it's a uint64_t.
         // The Rust code always uses u64, and converts here.
 
+        #[allow(clippy::useless_conversion)]
         match self.command_type {
             StreamCommandType::StartContinuous => {
                 c_cmd.stream_mode = uhd_sys::uhd_stream_mode_t::UHD_STREAM_MODE_START_CONTINUOUS;
@@ -204,11 +205,15 @@ impl StreamCommand {
             }
             StreamCommandType::CountAndDone(samples) => {
                 c_cmd.stream_mode = uhd_sys::uhd_stream_mode_t::UHD_STREAM_MODE_NUM_SAMPS_AND_DONE;
-                c_cmd.num_samps = samples;
+                c_cmd.num_samps = samples
+                    .try_into()
+                    .expect("Number of samples too large for size_t");
             }
             StreamCommandType::CountAndMore(samples) => {
                 c_cmd.stream_mode = uhd_sys::uhd_stream_mode_t::UHD_STREAM_MODE_NUM_SAMPS_AND_MORE;
-                c_cmd.num_samps = samples;
+                c_cmd.num_samps = samples
+                    .try_into()
+                    .expect("Number of samples too large for size_t");
             }
         };
         c_cmd
