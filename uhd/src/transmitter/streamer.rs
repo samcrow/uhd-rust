@@ -64,22 +64,27 @@ impl<I> TransmitStreamer<'_, I> {
         num_channels
     }
 
-    /// transmits samples from the USRP
+    /// Transmits samples with caller-provided metadata.
     ///
-    /// buffers: One or more buffers (one per channel) containing sample to transmit. All
-    /// buffers should have the same length. This function will panic if the number of buffers
-    /// is not equal to self.num_channels(), or if not all buffers have the same length.
+    /// Use this when you need to set `start_of_burst`, `end_of_burst`, or a time spec
+    /// on the send (e.x for bursty TX, see [`TransmitMetadata::with_flags`])
     ///
-    /// timeout: The timeout for the transmit operation, in seconds
+    /// `buffers`: one or more sample buffers (one per channel). Panics if the number
+    /// of buffers doesn't match `self.num_channels()` or if buffer lengths differ.
     ///
-    /// On success, this function returns a transmitMetadata object with information about
-    /// the number of samples actually transmitd.
-    pub fn transmit(
+    /// `metadata`: caller-owned. The `samples` field is updated in place with the
+    /// number of samples actually accepted by the streamer.
+    ///
+    /// `timeout`: the timeout for the send operation, in seconds.
+    ///
+    /// Returns the number of samples actually accepted by the streamer (may be less
+    /// than the buffer length on partial sends).
+    pub fn send(
         &mut self,
         buffers: &mut [&[I]],
+        metadata: &mut TransmitMetadata,
         timeout: f64,
-    ) -> Result<TransmitMetadata, Error> {
-        let mut metadata = TransmitMetadata::default();
+    ) -> Result<usize, Error> {
         let mut samples_transmitted = 0usize;
 
         // Initialize buffer_pointers
@@ -113,6 +118,29 @@ impl<I> TransmitStreamer<'_, I> {
         })?;
         metadata.set_samples(samples_transmitted);
 
+        Ok(samples_transmitted)
+    }
+
+    /// Transmits samples from the USRP using default (continuous-stream) metadata —
+    /// `start_of_burst = false`, `end_of_burst = false`, no time spec.
+    ///
+    /// For bursty transmission (discrete packets separated by gaps), use `send` with
+    /// `TransmitMetadata::with_flags` instead.
+    ///
+    /// `buffers`: one or more sample buffers (one per channel). Panics if the number
+    /// of buffers doesn't match `self.num_channels()` or if buffer lengths differ.
+    ///
+    /// `timeout`: the timeout for the transmit operation, in seconds.
+    ///
+    /// On success, returns the freshly-built `TransmitMetadata` with `samples()`
+    /// reflecting the number of samples actually accepted by the streamer.
+    pub fn transmit(
+        &mut self,
+        buffers: &mut [&[I]],
+        timeout: f64,
+    ) -> Result<TransmitMetadata, Error> {
+        let mut metadata = TransmitMetadata::default();
+        self.send(buffers, &mut metadata, timeout)?;
         Ok(metadata)
     }
 

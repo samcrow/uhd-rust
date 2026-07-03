@@ -49,7 +49,7 @@ impl<I> Default for StreamArgs<I> {
     /// and default arguments and channels
     fn default() -> Self {
         StreamArgs {
-            host_format: PhantomData::default(),
+            host_format: PhantomData,
             wire_format: "sc16".to_string(),
             args: "".to_string(),
             // Empty list = just channel 0
@@ -195,6 +195,7 @@ impl StreamCommand {
         // In some versions of UHD, num_samps is a size_t. In other versions, it's a uint64_t.
         // The Rust code always uses u64, and converts here.
 
+        #[allow(clippy::useless_conversion)]
         match self.command_type {
             StreamCommandType::StartContinuous => {
                 c_cmd.stream_mode = uhd_sys::uhd_stream_mode_t::UHD_STREAM_MODE_START_CONTINUOUS;

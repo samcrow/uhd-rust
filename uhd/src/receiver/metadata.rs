@@ -20,6 +20,7 @@ impl ReceiveMetadata {
 
     /// Returns the timestamp of (the first?) of the received samples, according to the USRP's
     /// internal clock
+    #[allow(clippy::useless_conversion)]
     pub fn time_spec(&self) -> Option<TimeSpec> {
         if self.has_time_spec() {
             let mut time = TimeSpec::default();
@@ -33,7 +34,8 @@ impl ReceiveMetadata {
                 )
             })
             .unwrap();
-            // Convert seconds from time_t to i64
+            // Explicitly convert seconds from time_t to i64 (some platforms `time_t` is smaller
+            // than `i64`)
             time.seconds = seconds_time_t.into();
             Some(time)
         } else {
@@ -219,10 +221,10 @@ mod test {
     fn default_rx_metadata() {
         let metadata = ReceiveMetadata::default();
         assert_eq!(None, metadata.time_spec());
-        assert_eq!(false, metadata.start_of_burst());
-        assert_eq!(false, metadata.end_of_burst());
-        assert_eq!(false, metadata.out_of_sequence());
-        assert_eq!(false, metadata.more_fragments());
+        assert!(!metadata.start_of_burst());
+        assert!(!metadata.end_of_burst());
+        assert!(!metadata.out_of_sequence());
+        assert!(!metadata.more_fragments());
         assert_eq!(0, metadata.fragment_offset());
         assert!(metadata.last_error().is_none());
     }

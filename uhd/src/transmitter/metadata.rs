@@ -17,8 +17,42 @@ impl TransmitMetadata {
         Default::default()
     }
 
+    /// Build a `TransmitMetadata` with explicit burst flags and an optional time spec.
+    ///
+    /// Useful for burst transmissions. Per the Ettus documentation, the first packet of a
+    /// burst should carry `start_of_burst = true` and the last packet should carry
+    /// `end_of_burst = true` so the radio can bracket the burst cleanly (RF enabled
+    /// at SOB, disabled at EOB, fresh re-init on the next SOB).
+    ///
+    /// `Default::default()` constructs metadata with all three fields cleared, which
+    /// is appropriate for continuous-streaming workloads.
+    pub fn with_flags(
+        start_of_burst: bool,
+        end_of_burst: bool,
+        time_spec: Option<TimeSpec>,
+    ) -> Self {
+        let (has_time_spec, full_secs, frac_secs) = match time_spec {
+            Some(t) => (true, t.seconds, t.fraction),
+            None => (false, 0i64, 0.0f64),
+        };
+        let mut handle: uhd_sys::uhd_tx_metadata_handle = ptr::null_mut();
+        check_status(unsafe {
+            uhd_sys::uhd_tx_metadata_make(
+                &mut handle,
+                has_time_spec,
+                full_secs,
+                frac_secs,
+                start_of_burst,
+                end_of_burst,
+            )
+        })
+        .unwrap();
+        TransmitMetadata { handle, samples: 0 }
+    }
+
     /// Returns the timestamp of (the first?) of the transmitted samples, according to the USRP's
     /// internal clock
+    #[allow(clippy::useless_conversion)]
     pub fn time_spec(&self) -> Option<TimeSpec> {
         if self.has_time_spec() {
             let mut time = TimeSpec::default();
@@ -32,7 +66,9 @@ impl TransmitMetadata {
                 )
             })
             .unwrap();
-            // Convert seconds from time_t to i64
+
+            // Explicitly convert seconds from time_t to i64 (some platforms `time_t` is smaller
+            // than `i64`)
             time.seconds = seconds_time_t.into();
             Some(time)
         } else {
@@ -139,7 +175,33 @@ mod test {
     fn default_tx_metadata() {
         let metadata = TransmitMetadata::default();
         assert_eq!(None, metadata.time_spec());
-        assert_eq!(false, metadata.start_of_burst());
-        assert_eq!(false, metadata.end_of_burst());
+        assert!(!metadata.start_of_burst());
+        assert!(!metadata.end_of_burst());
+    }
+
+    #[test]
+    fn with_flags_sob_eob_round_trip() {
+        let md = TransmitMetadata::with_flags(true, true, None);
+        assert!(md.start_of_burst());
+        assert!(md.end_of_burst());
+        assert_eq!(None, md.time_spec());
+    }
+
+    #[test]
+    fn with_flags_time_spec_round_trip() {
+        use crate::TimeSpec;
+        let md = TransmitMetadata::with_flags(
+            true,
+            false,
+            Some(TimeSpec {
+                seconds: 42,
+                fraction: 0.125,
+            }),
+        );
+        assert!(md.start_of_burst());
+        assert!(!md.end_of_burst());
+        let t = md.time_spec().expect("time_spec should be Some");
+        assert_eq!(42, t.seconds);
+        assert!((t.fraction - 0.125).abs() < 1e-12);
     }
 }
