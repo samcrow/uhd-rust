@@ -30,6 +30,25 @@ fn probe_one_usrp(address: &str) -> Result<(), Box<dyn Error>> {
         if let Ok(rate) = usrp.get_master_clock_rate(board) {
             println!("Master clock rate {}", rate);
         }
+        if let Err(e) = usrp.set_clock_source("gpsdo", board) {
+            println!("Failed to set clock source to gpsdo. This is expected if hardware doesn't support it: {e:?}");
+        }
+        if let Err(e) = usrp.set_time_source("gpsdo", board) {
+            println!("Failed to set time source to gpsdo. This is expected if hardware doesn't support it: {e:?}");
+        }
+        let clock_source = usrp.get_clock_source(board).ok();
+        if let Some(source) = &clock_source {
+            println!("Clock source: {}", source);
+        }
+        let time_source = usrp.get_time_source(board).ok();
+        if let Some(source) = &time_source {
+            println!("Time source: {}", source);
+        }
+        for sensor in usrp.get_mboard_sensor_names(board)? {
+            if let Ok(value) = usrp.get_mboard_sensor(&sensor, board) {
+                println!("Sensor {}: {}", sensor, value);
+            }
+        }
         if let Ok(eeprom) = usrp.get_motherboard_eeprom(board) {
             let keys = [
                 "hardware",
