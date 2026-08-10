@@ -490,6 +490,16 @@ impl Usrp {
         Ok(vector.into())
     }
 
+    /// Returns the typed value of a receive sensor
+    pub fn get_rx_sensor(&self, name: &str, channel: usize) -> Result<SensorValue, Error> {
+        let name = CString::new(name)?;
+        let mut sensor = SensorValueHandle::new()?;
+        check_status(unsafe {
+            uhd_sys::uhd_usrp_get_rx_sensor(self.0, name.as_ptr(), channel as _, &mut sensor.0)
+        })?;
+        sensor.value()
+    }
+
     /// Returns the frequency of a local oscillator
     pub fn get_tx_lo_frequency(&self, channel: usize, name: &str) -> Result<f64, Error> {
         let name = CString::new(name)?;
