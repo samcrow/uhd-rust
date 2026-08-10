@@ -528,6 +528,16 @@ impl Usrp {
         Ok(vector.into())
     }
 
+    /// Returns the typed value of a transmit sensor
+    pub fn get_tx_sensor(&self, name: &str, channel: usize) -> Result<SensorValue, Error> {
+        let name = CString::new(name)?;
+        let mut sensor = SensorValueHandle::new()?;
+        check_status(unsafe {
+            uhd_sys::uhd_usrp_get_tx_sensor(self.0, name.as_ptr(), channel as _, &mut sensor.0)
+        })?;
+        sensor.value()
+    }
+
     /// Opens a stream that can be used to receive samples
     pub fn get_rx_stream<I>(
         &mut self,
