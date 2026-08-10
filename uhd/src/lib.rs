@@ -38,7 +38,7 @@ pub use stream::*;
 pub use transmitter::{info::TransmitInfo, metadata::*, streamer::TransmitStreamer};
 pub use tune_request::*;
 pub use tune_result::TuneResult;
-pub use usrp::Usrp;
+pub use usrp::{SensorValue, Usrp};
 pub use utils::alloc_boxed_slice;
 // Common definitions
 

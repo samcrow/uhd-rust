@@ -336,6 +336,16 @@ impl Usrp {
         Ok(vector.into())
     }
 
+    /// Returns the typed value of a motherboard sensor
+    pub fn get_mboard_sensor(&self, name: &str, mboard: usize) -> Result<SensorValue, Error> {
+        let name = CString::new(name)?;
+        let mut sensor = SensorValueHandle::new()?;
+        check_status(unsafe {
+            uhd_sys::uhd_usrp_get_mboard_sensor(self.0, name.as_ptr(), mboard as _, &mut sensor.0)
+        })?;
+        sensor.value()
+    }
+
     /// Returns the values stored in the motherboard EEPROM
     pub fn get_motherboard_eeprom(&self, mboard: usize) -> Result<MotherboardEeprom, Error> {
         let mut eeprom = MotherboardEeprom::default();
@@ -807,6 +817,88 @@ impl Drop for Usrp {
     fn drop(&mut self) {
         // Ignore error (what errors could really happen that can be handled?)
         let _ = unsafe { uhd_sys::uhd_usrp_free(&mut self.0) };
+    }
+}
+
+/// A typed sensor reading.
+#[derive(Clone, Debug, PartialEq)]
+pub enum SensorValue {
+    Boolean(bool),
+    Integer(i32),
+    Real(f64),
+    String(String),
+}
+
+impl std::fmt::Display for SensorValue {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Boolean(value) => value.fmt(formatter),
+            Self::Integer(value) => value.fmt(formatter),
+            Self::Real(value) => value.fmt(formatter),
+            Self::String(value) => value.fmt(formatter),
+        }
+    }
+}
+
+struct SensorValueHandle(uhd_sys::uhd_sensor_value_handle);
+
+impl SensorValueHandle {
+    fn new() -> Result<Self, Error> {
+        let mut handle = ptr::null_mut();
+        check_status(unsafe { uhd_sys::uhd_sensor_value_make(&mut handle) })?;
+        Ok(Self(handle))
+    }
+
+    fn value(&self) -> Result<SensorValue, Error> {
+        use uhd_sys::uhd_sensor_value_data_type_t as data_type;
+
+        let mut sensor_type = 0;
+        check_status(unsafe { uhd_sys::uhd_sensor_value_data_type(self.0, &mut sensor_type) })?;
+
+        match sensor_type {
+            data_type::UHD_SENSOR_VALUE_BOOLEAN => {
+                let mut value = false;
+                check_status(unsafe { uhd_sys::uhd_sensor_value_to_bool(self.0, &mut value) })?;
+                Ok(SensorValue::Boolean(value))
+            }
+            data_type::UHD_SENSOR_VALUE_INTEGER => {
+                let mut value = 0;
+                check_status(unsafe { uhd_sys::uhd_sensor_value_to_int(self.0, &mut value) })?;
+                Ok(SensorValue::Integer(value))
+            }
+            data_type::UHD_SENSOR_VALUE_REALNUM => {
+                let mut value = 0.0;
+                check_status(unsafe { uhd_sys::uhd_sensor_value_to_realnum(self.0, &mut value) })?;
+                Ok(SensorValue::Real(value))
+            }
+            data_type::UHD_SENSOR_VALUE_STRING => {
+                let value = copy_string(|buffer, length| unsafe {
+                    uhd_sys::uhd_sensor_value_value(self.0, buffer, length as _)
+                })?;
+                Ok(SensorValue::String(value))
+            }
+            value => Err(Error::Unique(format!(
+                "Unknown UHD sensor value type: {}",
+                value
+            ))),
+        }
+    }
+}
+
+impl Drop for SensorValueHandle {
+    fn drop(&mut self) {
+        let _ = unsafe { uhd_sys::uhd_sensor_value_free(&mut self.0) };
+    }
+}
+
+#[cfg(test)]
+mod sensor_value_tests {
+    use super::{SensorValue, SensorValueHandle};
+
+    #[test]
+    fn empty_sensor_is_boolean_false() {
+        let sensor = SensorValueHandle::new().unwrap();
+        assert_eq!(sensor.value().unwrap(), SensorValue::Boolean(false));
     }
 }
 
