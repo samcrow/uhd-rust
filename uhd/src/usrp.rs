@@ -196,6 +196,14 @@ impl Usrp {
         Ok(range)
     }
 
+    /// Sets the time at which subsequent timed commands will take effect
+    pub fn set_command_time(&mut self, time: TimeSpec, mboard: usize) -> Result<(), Error> {
+        let (full_secs, frac_secs) = time.into_parts();
+        check_status(unsafe {
+            uhd_sys::uhd_usrp_set_command_time(self.0, full_secs, frac_secs, mboard as _)
+        })
+    }
+
     /// Clears the command time (?), causing stream commands to be sent immediately
     pub fn clear_command_time(&mut self, mboard: usize) -> Result<(), Error> {
         check_status(unsafe { uhd_sys::uhd_usrp_clear_command_time(self.0, mboard as _) })
