@@ -25,7 +25,7 @@ fn generate_bindings(include_path: &Path) {
     let out_path = out_dir.join("bindgen.rs");
 
     let mut builder = bindgen::builder()
-        .whitelist_function("^uhd.+")
+        .allowlist_function("^uhd.+")
         .default_enum_style(bindgen::EnumVariation::ModuleConsts)
         .header(usrp_header.to_string_lossy().clone())
         // Add the include directory to ensure that #includes in the header work correctly

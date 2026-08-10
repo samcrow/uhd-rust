@@ -20,7 +20,7 @@ doctest = false
 
 [build-dependencies]
 metadeps = "1.1.2"
-bindgen = "0.55.1"
+bindgen = "0.69"
 
 [package.metadata.pkg-config]
 uhd = "*"

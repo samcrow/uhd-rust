@@ -1,3 +1,8 @@
+# Unreleased
+
+* Updated `bindgen` dependency to pick up security fixes for transitive
+  dependencies.
+
 # 0.1.3 - 2024-08-13
 
 * Updated build script to make uhd-sys compile on Apple Silicon macOS devices
