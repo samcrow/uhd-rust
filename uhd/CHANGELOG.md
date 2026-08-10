@@ -3,6 +3,7 @@
 ## Changed
 
 * Exposed reading board, rx, and tx sensors
+* Added `set_command_time()` for timed commands
 
 # [0.4.0](https://github.com/samcrow/uhd-rust/tree/uhd-v0.4.0) - 2026-06-09
 
