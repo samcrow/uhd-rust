@@ -2,9 +2,19 @@ extern crate bindgen;
 extern crate metadeps;
 
 use std::env;
+use std::fs;
 use std::path::{Path, PathBuf};
 
 fn main() {
+    println!("cargo:rerun-if-env-changed=DOCS_RS");
+
+    // docs.rs does not provide the native UHD library or its headers. Use a checked-in binding
+    // snapshot there so that crates depending on uhd-sys can still be compiled by rustdoc.
+    if env::var_os("DOCS_RS").is_some() {
+        install_docs_rs_bindings();
+        return;
+    }
+
     // This reads the metadata in Cargo.toml and sends Cargo the appropriate output to link the
     // libraries
     let libraries = metadeps::probe().unwrap();
@@ -16,6 +26,14 @@ fn main() {
         .first()
         .expect("no include path for UHD headers");
     generate_bindings(uhd_include_path);
+}
+
+fn install_docs_rs_bindings() {
+    let bindings_path = Path::new("src/bindings_docs.rs");
+    let out_path = PathBuf::from(env::var_os("OUT_DIR").unwrap()).join("bindgen.rs");
+
+    println!("cargo:rerun-if-changed={}", bindings_path.display());
+    fs::copy(bindings_path, out_path).expect("Failed to install docs.rs UHD bindings");
 }
 
 fn generate_bindings(include_path: &Path) {
