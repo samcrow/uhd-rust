@@ -1,5 +1,7 @@
 # Unreleased
 
+* Fixed documentation builds on docs.rs, where the native UHD library and headers are not
+  available.
 * Updated `bindgen` dependency to pick up security fixes for transitive
   dependencies.
 

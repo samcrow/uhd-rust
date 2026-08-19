@@ -6,6 +6,9 @@ This crate provides low-level bindings to the UHD (USRP Hardware Driver) library
 
 The UHD library must be installed, and pkg-config must be able to find it.
 
+Building documentation on docs.rs does not require UHD to be installed. In that environment,
+the crate uses a checked-in binding snapshot instead of linking to the native library.
+
 ## License
 
 This crate is released under the MIT and Apache 2.0 licenses. You may redistribute it according to either license.
