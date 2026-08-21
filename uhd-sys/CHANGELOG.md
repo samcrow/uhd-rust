@@ -1,5 +1,9 @@
 # Unreleased
 
+# [0.1.4](https://github.com/samcrow/uhd-rust/releases/tag/uhd-sys-v0.1.4) - 2026-08-21
+
+## Changed
+
 * Fixed documentation builds on docs.rs, where the native UHD library and headers are not
   available.
 * Updated `bindgen` dependency to pick up security fixes for transitive

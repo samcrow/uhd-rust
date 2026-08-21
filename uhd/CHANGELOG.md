@@ -1,6 +1,8 @@
 # Unreleased
 
-## Changed
+# [0.4.1](https://github.com/samcrow/uhd-rust/releases/tag/uhd-v0.4.1) - 2026-08-21
+
+## Added
 
 * Exposed reading board, rx, and tx sensors
 * Added `set_command_time()` for timed commands
